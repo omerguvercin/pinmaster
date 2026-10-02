@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.pinmaster.app"
     android:versionCode="1"
-    android:versionName="1.0">
+    android:versionName="1">
 
     <uses-sdk
         android:minSdkVersion="26"
@@ -10,7 +10,6 @@
 
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.VIBRATE" />
 
     <application
@@ -21,6 +20,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.PinMaster">
 
+        <!-- Ana kurulum ekranı -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -34,19 +34,16 @@
             </intent-filter>
         </activity>
 
-        <service
-            android:name=".PinAccessibilityService"
-            android:exported="true"
-            android:label="@string/accessibility_service_name"
-            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
-            <intent-filter>
-                <action android:name="android.accessibilityservice.AccessibilityService" />
-            </intent-filter>
-            <meta-data
-                android:name="android.accessibilityservice"
-                android:resource="@xml/accessibility_service_config" />
-        </service>
+        <!-- Kiosk modu ekranı (kilitli launcher) -->
+        <activity
+            android:name=".KioskActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:launchMode="singleInstance"
+            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:screenOrientation="portrait"/>
 
+        <!-- Device Admin Receiver — DeviceOwner yetkisi için -->
         <receiver
             android:name=".PinDeviceAdminReceiver"
             android:exported="true"

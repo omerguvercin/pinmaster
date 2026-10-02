@@ -1,23 +1,20 @@
 package com.pinmaster.app;
 
 import android.app.Activity;
-import android.content.Context;
+import android.app.AlertDialog;
 import android.content.Intent;
-import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.provider.Settings;
 import android.text.Editable;
+import android.text.InputType;
 import android.text.TextWatcher;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ListView;
-import android.widget.SeekBar;
 import android.widget.Switch;
 import android.widget.TextView;
 import java.util.ArrayList;
@@ -26,37 +23,34 @@ import java.util.List;
 import java.util.Set;
 
 public class MainActivity extends Activity {
-    private Switch switchMaster;
+
+    // Status card
+    private View cardDoStatus;
     private TextView tvStatusTitle;
+    private TextView tvStatusDesc;
+    private TextView tvAdbCommand;
     private TextView tvSelectedSummary;
-    private View layoutWarnings;
-    private Button btnFixAccessibility;
-    private Button btnFixSystemPin;
-    private Button btnToggleMaster;
+    private Button btnStartKiosk;
 
-    private Button tabBtnApps;
-    private Button tabBtnSettings;
-    private Button tabBtnGuide;
+    // Tabs
+    private Button tabBtnApps, tabBtnSettings, tabBtnGuide;
+    private View viewTabApps, viewTabSettings, viewTabGuide;
 
-    private View viewTabApps;
-    private View viewTabSettings;
-    private View viewTabGuide;
-
+    // Apps tab
     private EditText etSearch;
     private ListView listApps;
     private AppAdapter appAdapter;
     private List<AppModel> appList = new ArrayList<>();
 
-    private SeekBar seekDelay;
-    private TextView tvDelayVal;
+    // Settings tab
     private Switch switchVibrate;
-    private Button btnOpenSecurity;
+    private TextView tvCurrentPin;
+    private Button btnChangePin;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
         initViews();
         setupTabs();
         setupSettings();
@@ -67,96 +61,148 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        updateServiceAndSystemStatus();
+        updateDeviceOwnerStatus();
+        updateSelectedCountText();
+        SettingsManager.applyLockTaskPackages(this);
     }
+
+    // ─── Init ─────────────────────────────────────────────────────────────────
 
     private void initViews() {
-        switchMaster = findViewById(R.id.switch_master);
-        tvStatusTitle = findViewById(R.id.tv_status_title);
+        cardDoStatus    = findViewById(R.id.card_do_status);
+        tvStatusTitle   = findViewById(R.id.tv_status_title);
+        tvStatusDesc    = findViewById(R.id.tv_status_desc);
+        tvAdbCommand    = findViewById(R.id.tv_adb_command);
         tvSelectedSummary = findViewById(R.id.tv_selected_summary);
-        layoutWarnings = findViewById(R.id.layout_warnings);
-        btnFixAccessibility = findViewById(R.id.btn_fix_accessibility);
-        btnFixSystemPin = findViewById(R.id.btn_fix_system_pin);
-        btnToggleMaster = findViewById(R.id.btn_toggle_master);
+        btnStartKiosk   = findViewById(R.id.btn_start_kiosk);
 
-        btnToggleMaster.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                boolean currentState = SettingsManager.isMasterEnabled(MainActivity.this);
-                SettingsManager.setMasterEnabled(MainActivity.this, !currentState);
-                updateServiceAndSystemStatus();
-            }
-        });
+        tabBtnApps      = findViewById(R.id.tab_btn_apps);
+        tabBtnSettings  = findViewById(R.id.tab_btn_settings);
+        tabBtnGuide     = findViewById(R.id.tab_btn_guide);
 
-        tabBtnApps = findViewById(R.id.tab_btn_apps);
-        tabBtnSettings = findViewById(R.id.tab_btn_settings);
-        tabBtnGuide = findViewById(R.id.tab_btn_guide);
-
-        viewTabApps = findViewById(R.id.view_tab_apps);
+        viewTabApps     = findViewById(R.id.view_tab_apps);
         viewTabSettings = findViewById(R.id.view_tab_settings);
-        viewTabGuide = findViewById(R.id.view_tab_guide);
+        viewTabGuide    = findViewById(R.id.view_tab_guide);
 
-        etSearch = findViewById(R.id.et_search);
-        listApps = findViewById(R.id.list_apps);
+        etSearch        = findViewById(R.id.et_search);
+        listApps        = findViewById(R.id.list_apps);
 
-        seekDelay = findViewById(R.id.seek_delay);
-        tvDelayVal = findViewById(R.id.tv_delay_val);
-        switchVibrate = findViewById(R.id.switch_vibrate);
-        btnOpenSecurity = findViewById(R.id.btn_open_security);
+        switchVibrate   = findViewById(R.id.switch_vibrate);
+        tvCurrentPin    = findViewById(R.id.tv_current_pin);
+        btnChangePin    = findViewById(R.id.btn_change_pin);
 
-        switchMaster.setChecked(SettingsManager.isMasterEnabled(this));
-        switchMaster.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                SettingsManager.setMasterEnabled(MainActivity.this, isChecked);
-                updateServiceAndSystemStatus();
-            }
-        });
-
-        btnFixAccessibility.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS);
-                startActivity(intent);
-            }
-        });
-
-        btnFixSystemPin.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(Settings.ACTION_SECURITY_SETTINGS);
-                startActivity(intent);
-            }
-        });
-
-        btnOpenSecurity.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(Settings.ACTION_SECURITY_SETTINGS);
-                startActivity(intent);
-            }
-        });
+        btnStartKiosk.setOnClickListener(v -> onStartKioskClicked());
     }
 
+    // ─── Kiosk start ──────────────────────────────────────────────────────────
+
+    private void onStartKioskClicked() {
+        if (!SettingsManager.isDeviceOwner(this)) {
+            showSetupDialog();
+            return;
+        }
+        if (SettingsManager.getPinnedPackages(this).isEmpty()) {
+            new AlertDialog.Builder(this)
+                    .setTitle("Uygulama Seçilmedi")
+                    .setMessage("Önce 'Uygulamalar' sekmesinden en az bir uygulama seçmelisiniz.")
+                    .setPositiveButton("Tamam", null)
+                    .show();
+            return;
+        }
+        SettingsManager.applyLockTaskPackages(this);
+        Intent intent = new Intent(this, KioskActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+    }
+
+    private void showSetupDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle("Bir Kerelik Kurulum Gerekli")
+                .setMessage(
+                    "Telefonu bilgisayara USB ile bağlayın ve aşağıdaki komutu çalıştırın.\n\n" +
+                    "Bu işlem yalnızca bir kez yapılır; sonrasında bilgisayar gerekmez.\n\n" +
+                    "adb shell dpm set-device-owner \\" +
+                    "\ncom.pinmaster.app/.PinDeviceAdminReceiver"
+                )
+                .setPositiveButton("Anladım", null)
+                .show();
+    }
+
+    // ─── Device Owner Status ──────────────────────────────────────────────────
+
+    private void updateDeviceOwnerStatus() {
+        boolean isOwner = SettingsManager.isDeviceOwner(this);
+
+        if (isOwner) {
+            tvStatusTitle.setText("✅  Sistem Hazır");
+            tvStatusDesc.setText("Cihaz Sahibi yetkisi aktif. Kiosk modu çalışmaya hazır.");
+            cardDoStatus.setBackgroundResource(R.drawable.badge_active);
+            tvAdbCommand.setVisibility(View.GONE);
+            btnStartKiosk.setAlpha(1.0f);
+            btnStartKiosk.setEnabled(true);
+        } else {
+            tvStatusTitle.setText("⚠️  Kurulum Gerekli");
+            tvStatusDesc.setText("Tek seferlik ADB kurulumu yapılmamış. Aşağıdaki komutu çalıştırın:");
+            cardDoStatus.setBackgroundResource(R.drawable.badge_inactive);
+            tvAdbCommand.setVisibility(View.VISIBLE);
+            tvAdbCommand.setText("adb shell dpm set-device-owner com.pinmaster.app/.PinDeviceAdminReceiver");
+            btnStartKiosk.setAlpha(0.4f);
+            btnStartKiosk.setEnabled(false);
+        }
+    }
+
+    // ─── Settings ─────────────────────────────────────────────────────────────
+
+    private void setupSettings() {
+        switchVibrate.setChecked(SettingsManager.isVibrateEnabled(this));
+        switchVibrate.setOnCheckedChangeListener((btn, checked) ->
+                SettingsManager.setVibrateEnabled(MainActivity.this, checked));
+
+        refreshPinDisplay();
+        btnChangePin.setOnClickListener(v -> showChangePinDialog());
+    }
+
+    private void refreshPinDisplay() {
+        String pin = SettingsManager.getExitPin(this);
+        StringBuilder stars = new StringBuilder();
+        for (int i = 0; i < pin.length(); i++) stars.append('•');
+        tvCurrentPin.setText("Mevcut PIN: " + stars);
+    }
+
+    private void showChangePinDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("PIN Değiştir");
+        builder.setMessage("Kiosk modundan çıkmak için kullanılan PIN (en az 4 hane).");
+
+        final EditText input = new EditText(this);
+        input.setInputType(InputType.TYPE_CLASS_NUMBER);
+        input.setHint("Yeni PIN");
+        input.setPadding(64, 32, 64, 32);
+        builder.setView(input);
+
+        builder.setPositiveButton("Kaydet", (dialog, which) -> {
+            String pin = input.getText().toString().trim();
+            if (pin.length() >= 4) {
+                SettingsManager.setExitPin(MainActivity.this, pin);
+                refreshPinDisplay();
+            } else {
+                new AlertDialog.Builder(MainActivity.this)
+                        .setMessage("PIN en az 4 haneli olmalıdır.")
+                        .setPositiveButton("Tamam", null)
+                        .show();
+            }
+        });
+        builder.setNegativeButton("İptal", null);
+        builder.show();
+    }
+
+    // ─── Tabs ─────────────────────────────────────────────────────────────────
+
     private void setupTabs() {
-        tabBtnApps.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                selectTab(0);
-            }
-        });
-        tabBtnSettings.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                selectTab(1);
-            }
-        });
-        tabBtnGuide.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                selectTab(2);
-            }
-        });
+        tabBtnApps.setOnClickListener(v -> selectTab(0));
+        tabBtnSettings.setOnClickListener(v -> selectTab(1));
+        tabBtnGuide.setOnClickListener(v -> selectTab(2));
+        selectTab(0);
     }
 
     private void selectTab(int index) {
@@ -164,120 +210,37 @@ public class MainActivity extends Activity {
         viewTabSettings.setVisibility(index == 1 ? View.VISIBLE : View.GONE);
         viewTabGuide.setVisibility(index == 2 ? View.VISIBLE : View.GONE);
 
-        int activeColor = getResources().getColor(R.color.accent_cyan);
+        int activeColor   = getResources().getColor(R.color.accent_cyan);
         int inactiveColor = getResources().getColor(R.color.text_secondary);
 
         tabBtnApps.setTextColor(index == 0 ? activeColor : inactiveColor);
-        tabBtnApps.setBackgroundResource(index == 0 ? R.drawable.card_bg : android.R.color.transparent);
-
         tabBtnSettings.setTextColor(index == 1 ? activeColor : inactiveColor);
-        tabBtnSettings.setBackgroundResource(index == 1 ? R.drawable.card_bg : android.R.color.transparent);
-
         tabBtnGuide.setTextColor(index == 2 ? activeColor : inactiveColor);
-        tabBtnGuide.setBackgroundResource(index == 2 ? R.drawable.card_bg : android.R.color.transparent);
+
+        tabBtnApps.setBackgroundResource(
+                index == 0 ? R.drawable.card_bg : android.R.color.transparent);
+        tabBtnSettings.setBackgroundResource(
+                index == 1 ? R.drawable.card_bg : android.R.color.transparent);
+        tabBtnGuide.setBackgroundResource(
+                index == 2 ? R.drawable.card_bg : android.R.color.transparent);
     }
 
-    private void setupSettings() {
-        int delay = SettingsManager.getDelayMs(this);
-        seekDelay.setProgress(delay);
-        tvDelayVal.setText(delay + " ms");
-
-        seekDelay.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                if (progress < 100) progress = 100;
-                tvDelayVal.setText(progress + " ms");
-                SettingsManager.setDelayMs(MainActivity.this, progress);
-            }
-            @Override public void onStartTrackingTouch(SeekBar seekBar) {}
-            @Override public void onStopTrackingTouch(SeekBar seekBar) {}
-        });
-
-        switchVibrate.setChecked(SettingsManager.isVibrateEnabled(this));
-        switchVibrate.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                SettingsManager.setVibrateEnabled(MainActivity.this, isChecked);
-            }
-        });
-    }
+    // ─── Search ───────────────────────────────────────────────────────────────
 
     private void setupSearch() {
         etSearch.addTextChangedListener(new TextWatcher() {
-            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                if (appAdapter != null) {
-                    appAdapter.filter(s.toString());
-                }
+            @Override public void beforeTextChanged(CharSequence s, int st, int c, int a) {}
+            @Override public void onTextChanged(CharSequence s, int st, int b, int c) {
+                if (appAdapter != null) appAdapter.filter(s.toString());
             }
             @Override public void afterTextChanged(Editable s) {}
         });
     }
 
-    private void updateServiceAndSystemStatus() {
-        boolean masterOn = SettingsManager.isMasterEnabled(this);
-        boolean systemPinOn = isSystemPinningEnabled();
-
-        if (!masterOn) {
-            tvStatusTitle.setText("Sabitleme Duraklatıldı");
-            tvStatusTitle.setTextColor(getResources().getColor(R.color.text_muted));
-            layoutWarnings.setVisibility(View.GONE);
-            findViewById(R.id.card_status).setBackgroundResource(R.drawable.badge_inactive);
-            btnToggleMaster.setText("Korumayı Başlat");
-            btnToggleMaster.setTextColor(getResources().getColor(R.color.accent_cyan));
-            switchMaster.setChecked(false);
-        } else if (!systemPinOn) {
-            tvStatusTitle.setText("Sistem Sabitleme Kapalı");
-            tvStatusTitle.setTextColor(getResources().getColor(R.color.accent_red));
-            layoutWarnings.setVisibility(View.VISIBLE);
-            btnFixAccessibility.setVisibility(View.GONE);
-            btnFixSystemPin.setVisibility(View.VISIBLE);
-            findViewById(R.id.card_status).setBackgroundResource(R.drawable.badge_inactive);
-            btnToggleMaster.setText("Korumayı Duraklat");
-            btnToggleMaster.setTextColor(getResources().getColor(R.color.text_primary));
-            switchMaster.setChecked(true);
-        } else {
-            tvStatusTitle.setText("Otomatik Sabitleme Aktif");
-            tvStatusTitle.setTextColor(getResources().getColor(R.color.accent_cyan));
-            layoutWarnings.setVisibility(View.GONE);
-            findViewById(R.id.card_status).setBackgroundResource(R.drawable.badge_active);
-            btnToggleMaster.setText("Korumayı Duraklat");
-            btnToggleMaster.setTextColor(getResources().getColor(R.color.text_primary));
-            switchMaster.setChecked(true);
-        }
-
-        updateSelectedCountText();
-        SettingsManager.syncTargetsToFile(this);
-    }
-
-    private boolean isAccessibilityServiceEnabled() {
-        try {
-            int accessibilityEnabled = Settings.Secure.getInt(
-                getContentResolver(),
-                Settings.Secure.ACCESSIBILITY_ENABLED, 0);
-            if (accessibilityEnabled == 1) {
-                String services = Settings.Secure.getString(
-                    getContentResolver(),
-                    Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
-                if (services != null) {
-                    return services.contains(getPackageName());
-                }
-            }
-        } catch (Exception ignored) {}
-        return false;
-    }
-
-    private boolean isSystemPinningEnabled() {
-        try {
-            int enabled = Settings.System.getInt(getContentResolver(), "lock_to_app_enabled", 0);
-            return enabled == 1;
-        } catch (Exception e) {
-            return true; // Fallback
-        }
-    }
+    // ─── App Loading ──────────────────────────────────────────────────────────
 
     private void updateSelectedCountText() {
+        if (tvSelectedSummary == null) return;
         int count = SettingsManager.getPinnedPackages(this).size();
         tvSelectedSummary.setText(String.format(getString(R.string.selected_apps_count), count));
     }
@@ -285,24 +248,20 @@ public class MainActivity extends Activity {
     private void loadInstalledApps() {
         new AsyncTask<Void, Void, List<AppModel>>() {
             @Override
-            protected List<AppModel> doInBackground(Void... voids) {
+            protected List<AppModel> doInBackground(Void... v) {
                 PackageManager pm = getPackageManager();
-                List<PackageInfo> packages = pm.getInstalledPackages(0);
+                List<PackageInfo> pkgs = pm.getInstalledPackages(0);
                 List<AppModel> list = new ArrayList<>();
-                Set<String> pinnedSet = SettingsManager.getPinnedPackages(MainActivity.this);
+                Set<String> pinned = SettingsManager.getPinnedPackages(MainActivity.this);
 
-                for (PackageInfo pi : packages) {
-                    // Sadece kullanıcı tarafından başlatılabilir (Launcher Intent'e sahip) uygulamaları filtrele
-                    if (pm.getLaunchIntentForPackage(pi.packageName) != null) {
-                        if (pi.packageName.equals(getPackageName())) {
-                            continue; // Kendini listeleme
-                        }
-                        String label = pm.getApplicationLabel(pi.applicationInfo).toString();
-                        boolean isPinned = pinnedSet.contains(pi.packageName);
-                        list.add(new AppModel(label, pi.packageName, pm.getApplicationIcon(pi.applicationInfo), isPinned));
-                    }
+                for (PackageInfo pi : pkgs) {
+                    if (pm.getLaunchIntentForPackage(pi.packageName) == null) continue;
+                    if (pi.packageName.equals(getPackageName())) continue;
+                    String label = pm.getApplicationLabel(pi.applicationInfo).toString();
+                    list.add(new AppModel(label, pi.packageName,
+                            pm.getApplicationIcon(pi.applicationInfo),
+                            pinned.contains(pi.packageName)));
                 }
-
                 Collections.sort(list);
                 return list;
             }
@@ -310,12 +269,8 @@ public class MainActivity extends Activity {
             @Override
             protected void onPostExecute(List<AppModel> result) {
                 appList = result;
-                appAdapter = new AppAdapter(MainActivity.this, appList, new AppAdapter.OnAppPinChangeListener() {
-                    @Override
-                    public void onPinChanged(AppModel app, boolean isPinned) {
-                        updateSelectedCountText();
-                    }
-                });
+                appAdapter = new AppAdapter(MainActivity.this, appList,
+                        (app, isPinned) -> updateSelectedCountText());
                 listApps.setAdapter(appAdapter);
                 updateSelectedCountText();
             }

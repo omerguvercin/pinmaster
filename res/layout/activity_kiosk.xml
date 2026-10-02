@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/bg_dark"
+    android:gravity="center">
+
+    <!-- ── Top spacer ── -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"/>
+
+    <!-- ── Logo / Gizli Çıkış Tetikleyicisi ── -->
+    <LinearLayout
+        android:id="@+id/kiosk_exit_trigger"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:padding="24dp">
+
+        <!-- İkon — 80dp -->
+        <ImageView
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:src="@mipmap/ic_launcher"
+            android:scaleType="fitCenter"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="PinMaster"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary"
+            android:fontFamily="sans-serif-medium"
+            android:letterSpacing="-0.02"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="🔒  Koruma Aktif"
+            android:textSize="13sp"
+            android:textColor="@color/accent_cyan"/>
+    </LinearLayout>
+
+    <!-- ── Ayraç ── -->
+    <View
+        android:layout_width="48dp"
+        android:layout_height="2dp"
+        android:layout_marginTop="24dp"
+        android:layout_marginBottom="32dp"
+        android:background="@color/accent_cyan"
+        android:alpha="0.3"/>
+
+    <!-- ── Uygulama Izgarası ── -->
+    <GridView
+        android:id="@+id/kiosk_grid"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:numColumns="3"
+        android:horizontalSpacing="8dp"
+        android:verticalSpacing="16dp"
+        android:paddingLeft="24dp"
+        android:paddingRight="24dp"
+        android:listSelector="@android:color/transparent"
+        android:stretchMode="columnWidth"/>
+
+    <!-- ── Boş durum mesajı ── -->
+    <TextView
+        android:id="@+id/tv_kiosk_empty"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Henüz uygulama seçilmedi.\nPinMaster'ı açıp uygulama ekleyin."
+        android:textSize="14sp"
+        android:textColor="@color/text_muted"
+        android:gravity="center"
+        android:padding="24dp"
+        android:visibility="gone"/>
+
+    <!-- ── Bottom spacer ── -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"/>
+
+    <!-- ── Hint ── -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="32dp"
+        android:text="Logo'ya 5 kez dokun → Yönetici girişi"
+        android:textSize="11sp"
+        android:textColor="@color/text_muted"
+        android:gravity="center"
+        android:alpha="0.5"/>
+
+</LinearLayout>
