@@ -8,9 +8,10 @@
         android:minSdkVersion="26"
         android:targetSdkVersion="34" />
 
+    <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
-    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
     <application
         android:allowBackup="true"
@@ -34,16 +35,38 @@
             </intent-filter>
         </activity>
 
-        <!-- Kiosk modu ekranı (kilitli launcher) -->
+        <!--
+             GuardActivity — görünmez arka plan kilidi.
+             Pinlenmiş uygulama açıldığında arka planda startLockTask() çalıştırır.
+             Kullanıcı uygulamadan çıkmaya çalışınca öne gelir ve guard ekranını gösterir.
+        -->
         <activity
-            android:name=".KioskActivity"
+            android:name=".GuardActivity"
             android:exported="false"
             android:excludeFromRecents="true"
-            android:launchMode="singleInstance"
-            android:configChanges="orientation|screenSize|keyboardHidden"
-            android:screenOrientation="portrait"/>
+            android:launchMode="singleTask"
+            android:configChanges="orientation|screenSize"
+            android:theme="@style/Theme.PinMaster"/>
 
-        <!-- Device Admin Receiver — DeviceOwner yetkisi için -->
+        <!--
+             PinAccessibilityService — uygulama açılışlarını izler.
+             Android her boot sonrasında erişilebilirlik servislerini otomatik başlatır.
+             Daemon veya ADB gereksinimi olmadan boot'ta auto-start sağlar.
+        -->
+        <service
+            android:name=".PinAccessibilityService"
+            android:exported="true"
+            android:label="@string/accessibility_service_name"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibility_service_config" />
+        </service>
+
+        <!-- Device Admin Receiver — DeviceOwner yetkisi için (sessiz mod) -->
         <receiver
             android:name=".PinDeviceAdminReceiver"
             android:exported="true"

@@ -5,9 +5,9 @@
     android:orientation="vertical"
     android:background="@color/bg_dark">
 
-    <!-- ═══════════════════════════════════════════════════════════
+    <!-- ══════════════════════════════════════════════
          HEADER
-    ═══════════════════════════════════════════════════════════ -->
+    ══════════════════════════════════════════════ -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -31,8 +31,7 @@
                 android:textSize="28sp"
                 android:textStyle="bold"
                 android:textColor="@color/text_primary"
-                android:fontFamily="sans-serif-medium"
-                android:letterSpacing="-0.02"/>
+                android:fontFamily="sans-serif-medium"/>
 
             <TextView
                 android:layout_width="wrap_content"
@@ -42,25 +41,18 @@
                 android:textColor="@color/text_muted"/>
         </LinearLayout>
 
-        <TextView
-            android:id="@+id/tv_selected_summary"
+        <!-- Master switch — sağ üstte -->
+        <Switch
+            android:id="@+id/switch_master"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="0 Uygulama"
-            android:textSize="12sp"
-            android:textColor="@color/accent_cyan"
-            android:background="@drawable/card_bg"
-            android:paddingLeft="12dp"
-            android:paddingRight="12dp"
-            android:paddingTop="6dp"
-            android:paddingBottom="6dp"/>
+            android:layout_height="wrap_content"/>
     </LinearLayout>
 
-    <!-- ═══════════════════════════════════════════════════════════
-         DEVICE OWNER STATUS CARD
-    ═══════════════════════════════════════════════════════════ -->
+    <!-- ══════════════════════════════════════════════
+         DURUM KARTI
+    ══════════════════════════════════════════════ -->
     <LinearLayout
-        android:id="@+id/card_do_status"
+        android:id="@+id/card_status"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
@@ -87,7 +79,7 @@
             android:textSize="12sp"
             android:textColor="@color/text_secondary"/>
 
-        <!-- ADB command — yalnızca kurulum gerekirken görünür -->
+        <!-- ADB komutu — yalnızca DeviceOwner kurulu değilse -->
         <TextView
             android:id="@+id/tv_adb_command"
             android:layout_width="match_parent"
@@ -99,11 +91,36 @@
             android:textSize="11sp"
             android:fontFamily="monospace"
             android:visibility="gone"/>
+
+        <!-- Erişilebilirlik butonu — yalnızca gerektiğinde -->
+        <Button
+            android:id="@+id/btn_open_accessibility"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:layout_marginTop="10dp"
+            android:text="Erişilebilirliği Aç"
+            android:textSize="12sp"
+            android:textColor="@color/text_primary"
+            android:background="@drawable/btn_secondary"
+            android:stateListAnimator="@null"
+            android:visibility="gone"/>
     </LinearLayout>
 
-    <!-- ═══════════════════════════════════════════════════════════
-         TAB BUTTONS
-    ═══════════════════════════════════════════════════════════ -->
+    <!-- Seçili uygulama sayısı -->
+    <TextView
+        android:id="@+id/tv_selected_summary"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingLeft="20dp"
+        android:paddingRight="20dp"
+        android:paddingBottom="6dp"
+        android:text="0 Uygulama Seçili"
+        android:textSize="12sp"
+        android:textColor="@color/text_muted"/>
+
+    <!-- ══════════════════════════════════════════════
+         SEKME BUTONLARI
+    ══════════════════════════════════════════════ -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -149,13 +166,12 @@
             android:stateListAnimator="@null"/>
     </LinearLayout>
 
-    <!-- ═══════════════════════════════════════════════════════════
-         TAB CONTENTS
-    ═══════════════════════════════════════════════════════════ -->
+    <!-- ══════════════════════════════════════════════
+         SEKME İÇERİKLERİ
+    ══════════════════════════════════════════════ -->
     <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1">
+        android:layout_height="match_parent">
 
         <!-- ── Uygulamalar ── -->
         <LinearLayout
@@ -226,7 +242,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Kiosk başladığında titreşim ver"
+                            android:text="Kilitleme anında titreşim"
                             android:textColor="@color/text_secondary"
                             android:textSize="12sp"/>
                     </LinearLayout>
@@ -237,7 +253,7 @@
                         android:layout_height="wrap_content"/>
                 </LinearLayout>
 
-                <!-- Çıkış PIN'i -->
+                <!-- Çıkış PIN -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -258,8 +274,8 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:layout_marginBottom="14dp"
-                        android:text="Kiosk modundan çıkmak için logo'ya 5 kez dokun ve bu PIN'i gir."
+                        android:layout_marginBottom="12dp"
+                        android:text="PinMaster logosuna 5 kez dok → bu PIN → kilit kalkar"
                         android:textColor="@color/text_secondary"
                         android:textSize="12sp"/>
 
@@ -299,7 +315,7 @@
                         android:textColor="@color/text_muted"
                         android:textSize="11sp"
                         android:textStyle="bold"
-                        android:letterSpacing="0.12"/>
+                        android:letterSpacing="0.1"/>
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -343,119 +359,57 @@
                 android:orientation="vertical"
                 android:padding="16dp">
 
-                <!-- Adım 1 -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:background="@drawable/card_bg"
-                    android:padding="16dp"
-                    android:layout_marginBottom="10dp">
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="1  —  Kurulum (Bir Kez)"
-                        android:textColor="@color/accent_cyan"
-                        android:textSize="14sp"
-                        android:textStyle="bold"/>
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="vertical" android:background="@drawable/card_bg"
+                    android:padding="16dp" android:layout_marginBottom="10dp">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="1 — Erişilebilirliği Etkinleştir"
+                        android:textColor="@color/accent_cyan" android:textSize="14sp" android:textStyle="bold"/>
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:text="Telefonu bilgisayara USB ile bağlayın. Bilgisayarda şu komutu çalıştırın:\n\nadb shell dpm set-device-owner com.pinmaster.app/.PinDeviceAdminReceiver\n\nBu işlem yalnızca bir kez yapılır."
-                        android:textColor="@color/text_secondary"
-                        android:textSize="13sp"/>
+                        android:text="Ayarlar → Erişilebilirlik → PinMaster'ı açın. Bu yeterli — uygulama her boot'ta otomatik başlar."
+                        android:textColor="@color/text_secondary" android:textSize="13sp"/>
                 </LinearLayout>
 
-                <!-- Adım 2 -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:background="@drawable/card_bg"
-                    android:padding="16dp"
-                    android:layout_marginBottom="10dp">
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="2  —  Uygulama Seç"
-                        android:textColor="@color/accent_cyan"
-                        android:textSize="14sp"
-                        android:textStyle="bold"/>
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="vertical" android:background="@drawable/card_bg"
+                    android:padding="16dp" android:layout_marginBottom="10dp">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="2 — Uygulama Seç"
+                        android:textColor="@color/accent_cyan" android:textSize="14sp" android:textStyle="bold"/>
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:text="'Uygulamalar' sekmesinden kiosk modunda erişilmesini istediğiniz uygulamaları seçin."
-                        android:textColor="@color/text_secondary"
-                        android:textSize="13sp"/>
+                        android:text="'Uygulamalar' sekmesinden kilitlemek istediğiniz uygulamaları seçin."
+                        android:textColor="@color/text_secondary" android:textSize="13sp"/>
                 </LinearLayout>
 
-                <!-- Adım 3 -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:background="@drawable/card_bg"
-                    android:padding="16dp"
-                    android:layout_marginBottom="10dp">
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="3  —  Korumayı Başlat"
-                        android:textColor="@color/accent_cyan"
-                        android:textSize="14sp"
-                        android:textStyle="bold"/>
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="vertical" android:background="@drawable/card_bg"
+                    android:padding="16dp" android:layout_marginBottom="10dp">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="3 — Sessiz Mod (Opsiyonel, Önerilen)"
+                        android:textColor="@color/accent_cyan" android:textSize="14sp" android:textStyle="bold"/>
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:text="'Korumayı Başlat' düğmesine basın. Telefon kiosk moduna girer; yalnızca seçili uygulamalara erişilebilir."
-                        android:textColor="@color/text_secondary"
-                        android:textSize="13sp"/>
+                        android:text="Telefonu USB'ye takın ve şu komutu çalıştırın:\n\nadb shell dpm set-device-owner com.pinmaster.app/.PinDeviceAdminReceiver\n\nBu işlem yalnızca bir kez yapılır. Sonrasında kilitleme tamamen sessiz olur."
+                        android:textColor="@color/text_secondary" android:textSize="13sp"/>
                 </LinearLayout>
 
-                <!-- Adım 4 -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:background="@drawable/card_bg"
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="vertical" android:background="@drawable/card_bg"
                     android:padding="16dp">
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="4  —  Çıkış"
-                        android:textColor="@color/accent_cyan"
-                        android:textSize="14sp"
-                        android:textStyle="bold"/>
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="4 — Kilitden Çıkış"
+                        android:textColor="@color/accent_cyan" android:textSize="14sp" android:textStyle="bold"/>
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:text="Kiosk ekranında 'PinMaster' yazısına 5 kez dokunun. PIN girin. Kiosk modu kapanır."
-                        android:textColor="@color/text_secondary"
-                        android:textSize="13sp"/>
+                        android:text="Kilitli uygulamadan çıkmaya çalışınca guard ekranı gelir. PinMaster logosuna 5 kez dokun → PIN girin → kilit kalkar."
+                        android:textColor="@color/text_secondary" android:textSize="13sp"/>
                 </LinearLayout>
 
             </LinearLayout>
         </ScrollView>
 
     </FrameLayout>
-
-    <!-- ═══════════════════════════════════════════════════════════
-         KORUMAY! BAŞLAT BUTTON
-    ═══════════════════════════════════════════════════════════ -->
-    <Button
-        android:id="@+id/btn_start_kiosk"
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:layout_margin="16dp"
-        android:text="🔒   Korumayı Başlat"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        android:textColor="#FFFFFF"
-        android:background="@drawable/btn_gradient"
-        android:stateListAnimator="@null"/>
 
 </LinearLayout>

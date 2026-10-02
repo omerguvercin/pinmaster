@@ -7,6 +7,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.text.Editable;
 import android.text.InputType;
 import android.text.TextWatcher;
@@ -24,28 +25,29 @@ import java.util.Set;
 
 public class MainActivity extends Activity {
 
-    // Status card
-    private View cardDoStatus;
-    private TextView tvStatusTitle;
-    private TextView tvStatusDesc;
-    private TextView tvAdbCommand;
-    private TextView tvSelectedSummary;
-    private Button btnStartKiosk;
+    // Durum kartı
+    private View cardStatus;
+    private TextView tvStatusTitle, tvStatusDesc, tvAdbCommand;
 
-    // Tabs
+    // Master switch
+    private Switch switchMaster;
+    private TextView tvSelectedSummary;
+
+    // Sekmeler
     private Button tabBtnApps, tabBtnSettings, tabBtnGuide;
     private View viewTabApps, viewTabSettings, viewTabGuide;
 
-    // Apps tab
+    // Uygulamalar sekmesi
     private EditText etSearch;
     private ListView listApps;
     private AppAdapter appAdapter;
     private List<AppModel> appList = new ArrayList<>();
 
-    // Settings tab
+    // Ayarlar sekmesi
     private Switch switchVibrate;
     private TextView tvCurrentPin;
     private Button btnChangePin;
+    private Button btnAccessibility;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,7 +63,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        updateDeviceOwnerStatus();
+        updateStatus();
         updateSelectedCountText();
         SettingsManager.applyLockTaskPackages(this);
     }
@@ -69,86 +71,85 @@ public class MainActivity extends Activity {
     // ─── Init ─────────────────────────────────────────────────────────────────
 
     private void initViews() {
-        cardDoStatus    = findViewById(R.id.card_do_status);
-        tvStatusTitle   = findViewById(R.id.tv_status_title);
-        tvStatusDesc    = findViewById(R.id.tv_status_desc);
-        tvAdbCommand    = findViewById(R.id.tv_adb_command);
+        cardStatus       = findViewById(R.id.card_status);
+        tvStatusTitle    = findViewById(R.id.tv_status_title);
+        tvStatusDesc     = findViewById(R.id.tv_status_desc);
+        tvAdbCommand     = findViewById(R.id.tv_adb_command);
         tvSelectedSummary = findViewById(R.id.tv_selected_summary);
-        btnStartKiosk   = findViewById(R.id.btn_start_kiosk);
 
-        tabBtnApps      = findViewById(R.id.tab_btn_apps);
-        tabBtnSettings  = findViewById(R.id.tab_btn_settings);
-        tabBtnGuide     = findViewById(R.id.tab_btn_guide);
+        switchMaster = findViewById(R.id.switch_master);
+        switchMaster.setChecked(SettingsManager.isMasterEnabled(this));
+        switchMaster.setOnCheckedChangeListener((btn, checked) -> {
+            SettingsManager.setMasterEnabled(MainActivity.this, checked);
+            updateStatus();
+        });
+
+        tabBtnApps     = findViewById(R.id.tab_btn_apps);
+        tabBtnSettings = findViewById(R.id.tab_btn_settings);
+        tabBtnGuide    = findViewById(R.id.tab_btn_guide);
 
         viewTabApps     = findViewById(R.id.view_tab_apps);
         viewTabSettings = findViewById(R.id.view_tab_settings);
         viewTabGuide    = findViewById(R.id.view_tab_guide);
 
-        etSearch        = findViewById(R.id.et_search);
-        listApps        = findViewById(R.id.list_apps);
+        etSearch  = findViewById(R.id.et_search);
+        listApps  = findViewById(R.id.list_apps);
 
-        switchVibrate   = findViewById(R.id.switch_vibrate);
-        tvCurrentPin    = findViewById(R.id.tv_current_pin);
-        btnChangePin    = findViewById(R.id.btn_change_pin);
+        switchVibrate  = findViewById(R.id.switch_vibrate);
+        tvCurrentPin   = findViewById(R.id.tv_current_pin);
+        btnChangePin   = findViewById(R.id.btn_change_pin);
+        btnAccessibility = findViewById(R.id.btn_open_accessibility);
 
-        btnStartKiosk.setOnClickListener(v -> onStartKioskClicked());
-    }
-
-    // ─── Kiosk start ──────────────────────────────────────────────────────────
-
-    private void onStartKioskClicked() {
-        if (!SettingsManager.isDeviceOwner(this)) {
-            showSetupDialog();
-            return;
+        if (btnAccessibility != null) {
+            btnAccessibility.setOnClickListener(v ->
+                    startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)));
         }
-        if (SettingsManager.getPinnedPackages(this).isEmpty()) {
-            new AlertDialog.Builder(this)
-                    .setTitle("Uygulama Seçilmedi")
-                    .setMessage("Önce 'Uygulamalar' sekmesinden en az bir uygulama seçmelisiniz.")
-                    .setPositiveButton("Tamam", null)
-                    .show();
-            return;
-        }
-        SettingsManager.applyLockTaskPackages(this);
-        Intent intent = new Intent(this, KioskActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        startActivity(intent);
     }
 
-    private void showSetupDialog() {
-        new AlertDialog.Builder(this)
-                .setTitle("Bir Kerelik Kurulum Gerekli")
-                .setMessage(
-                    "Telefonu bilgisayara USB ile bağlayın ve aşağıdaki komutu çalıştırın.\n\n" +
-                    "Bu işlem yalnızca bir kez yapılır; sonrasında bilgisayar gerekmez.\n\n" +
-                    "adb shell dpm set-device-owner \\" +
-                    "\ncom.pinmaster.app/.PinDeviceAdminReceiver"
-                )
-                .setPositiveButton("Anladım", null)
-                .show();
-    }
+    // ─── Status card ──────────────────────────────────────────────────────────
 
-    // ─── Device Owner Status ──────────────────────────────────────────────────
+    private void updateStatus() {
+        boolean isOwner       = SettingsManager.isDeviceOwner(this);
+        boolean masterEnabled = SettingsManager.isMasterEnabled(this);
+        boolean accessEnabled = isAccessibilityEnabled();
 
-    private void updateDeviceOwnerStatus() {
-        boolean isOwner = SettingsManager.isDeviceOwner(this);
-
-        if (isOwner) {
-            tvStatusTitle.setText("✅  Sistem Hazır");
-            tvStatusDesc.setText("Cihaz Sahibi yetkisi aktif. Kiosk modu çalışmaya hazır.");
-            cardDoStatus.setBackgroundResource(R.drawable.badge_active);
+        if (!masterEnabled) {
+            tvStatusTitle.setText("⏸  Koruma Duraklatıldı");
+            tvStatusDesc.setText("Otomatik kilitleme geçici olarak devre dışı.");
+            cardStatus.setBackgroundResource(R.drawable.badge_inactive);
             tvAdbCommand.setVisibility(View.GONE);
-            btnStartKiosk.setAlpha(1.0f);
-            btnStartKiosk.setEnabled(true);
-        } else {
-            tvStatusTitle.setText("⚠️  Kurulum Gerekli");
-            tvStatusDesc.setText("Tek seferlik ADB kurulumu yapılmamış. Aşağıdaki komutu çalıştırın:");
-            cardDoStatus.setBackgroundResource(R.drawable.badge_inactive);
+        } else if (!accessEnabled) {
+            tvStatusTitle.setText("⚠️  Erişilebilirlik Gerekli");
+            tvStatusDesc.setText("'Erişilebilirliği Aç' butonuna basıp PinMaster'ı etkinleştirin.");
+            cardStatus.setBackgroundResource(R.drawable.badge_inactive);
+            tvAdbCommand.setVisibility(View.GONE);
+        } else if (!isOwner) {
+            tvStatusTitle.setText("⚙️  Sessiz Mod İçin Kurulum Gerekli");
+            tvStatusDesc.setText("Temel koruma çalışıyor. Sessiz (diyalogsuz) mod için:");
+            cardStatus.setBackgroundResource(R.drawable.badge_inactive);
             tvAdbCommand.setVisibility(View.VISIBLE);
             tvAdbCommand.setText("adb shell dpm set-device-owner com.pinmaster.app/.PinDeviceAdminReceiver");
-            btnStartKiosk.setAlpha(0.4f);
-            btnStartKiosk.setEnabled(false);
+        } else {
+            tvStatusTitle.setText("✅  Koruma Aktif");
+            tvStatusDesc.setText("Otomatik sessiz kilitleme açık. Boot sonrası otomatik başlar.");
+            cardStatus.setBackgroundResource(R.drawable.badge_active);
+            tvAdbCommand.setVisibility(View.GONE);
         }
+
+        switchMaster.setChecked(masterEnabled);
+    }
+
+    private boolean isAccessibilityEnabled() {
+        try {
+            int enabled = Settings.Secure.getInt(
+                    getContentResolver(), Settings.Secure.ACCESSIBILITY_ENABLED, 0);
+            if (enabled == 1) {
+                String services = Settings.Secure.getString(
+                        getContentResolver(), Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
+                return services != null && services.contains(getPackageName());
+            }
+        } catch (Exception ignored) {}
+        return false;
     }
 
     // ─── Settings ─────────────────────────────────────────────────────────────
@@ -172,7 +173,7 @@ public class MainActivity extends Activity {
     private void showChangePinDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("PIN Değiştir");
-        builder.setMessage("Kiosk modundan çıkmak için kullanılan PIN (en az 4 hane).");
+        builder.setMessage("Kilitli moddan çıkmak için kullanılacak PIN (en az 4 hane).");
 
         final EditText input = new EditText(this);
         input.setInputType(InputType.TYPE_CLASS_NUMBER);
@@ -180,7 +181,7 @@ public class MainActivity extends Activity {
         input.setPadding(64, 32, 64, 32);
         builder.setView(input);
 
-        builder.setPositiveButton("Kaydet", (dialog, which) -> {
+        builder.setPositiveButton("Kaydet", (d, w) -> {
             String pin = input.getText().toString().trim();
             if (pin.length() >= 4) {
                 SettingsManager.setExitPin(MainActivity.this, pin);
@@ -188,8 +189,7 @@ public class MainActivity extends Activity {
             } else {
                 new AlertDialog.Builder(MainActivity.this)
                         .setMessage("PIN en az 4 haneli olmalıdır.")
-                        .setPositiveButton("Tamam", null)
-                        .show();
+                        .setPositiveButton("Tamam", null).show();
             }
         });
         builder.setNegativeButton("İptal", null);
@@ -210,19 +210,16 @@ public class MainActivity extends Activity {
         viewTabSettings.setVisibility(index == 1 ? View.VISIBLE : View.GONE);
         viewTabGuide.setVisibility(index == 2 ? View.VISIBLE : View.GONE);
 
-        int activeColor   = getResources().getColor(R.color.accent_cyan);
-        int inactiveColor = getResources().getColor(R.color.text_secondary);
+        int active   = getResources().getColor(R.color.accent_cyan);
+        int inactive = getResources().getColor(R.color.text_secondary);
 
-        tabBtnApps.setTextColor(index == 0 ? activeColor : inactiveColor);
-        tabBtnSettings.setTextColor(index == 1 ? activeColor : inactiveColor);
-        tabBtnGuide.setTextColor(index == 2 ? activeColor : inactiveColor);
+        tabBtnApps.setTextColor(index == 0 ? active : inactive);
+        tabBtnSettings.setTextColor(index == 1 ? active : inactive);
+        tabBtnGuide.setTextColor(index == 2 ? active : inactive);
 
-        tabBtnApps.setBackgroundResource(
-                index == 0 ? R.drawable.card_bg : android.R.color.transparent);
-        tabBtnSettings.setBackgroundResource(
-                index == 1 ? R.drawable.card_bg : android.R.color.transparent);
-        tabBtnGuide.setBackgroundResource(
-                index == 2 ? R.drawable.card_bg : android.R.color.transparent);
+        tabBtnApps.setBackgroundResource(index == 0 ? R.drawable.card_bg : android.R.color.transparent);
+        tabBtnSettings.setBackgroundResource(index == 1 ? R.drawable.card_bg : android.R.color.transparent);
+        tabBtnGuide.setBackgroundResource(index == 2 ? R.drawable.card_bg : android.R.color.transparent);
     }
 
     // ─── Search ───────────────────────────────────────────────────────────────
@@ -237,7 +234,7 @@ public class MainActivity extends Activity {
         });
     }
 
-    // ─── App Loading ──────────────────────────────────────────────────────────
+    // ─── App list ─────────────────────────────────────────────────────────────
 
     private void updateSelectedCountText() {
         if (tvSelectedSummary == null) return;

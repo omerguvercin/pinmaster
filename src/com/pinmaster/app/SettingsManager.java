@@ -9,19 +9,31 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class SettingsManager {
-    private static final String PREF_NAME = "pinmaster_settings";
-    private static final String KEY_PINNED_APPS = "pinned_packages";
-    private static final String KEY_VIBRATE = "vibrate_enabled";
-    private static final String KEY_EXIT_PIN = "exit_pin";
+    private static final String PREF_NAME    = "pinmaster_settings";
+    private static final String KEY_PINNED   = "pinned_packages";
+    private static final String KEY_MASTER   = "master_enabled";
+    private static final String KEY_VIBRATE  = "vibrate_enabled";
+    private static final String KEY_PIN      = "exit_pin";
 
     private static SharedPreferences getPrefs(Context ctx) {
         return ctx.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
     }
 
-    // ─── Pinned Apps ──────────────────────────────────────────────────────────
+    // ─── Master switch ────────────────────────────────────────────────────────
+
+    public static boolean isMasterEnabled(Context ctx) {
+        return getPrefs(ctx).getBoolean(KEY_MASTER, true);
+    }
+
+    public static void setMasterEnabled(Context ctx, boolean enabled) {
+        getPrefs(ctx).edit().putBoolean(KEY_MASTER, enabled).apply();
+        applyLockTaskPackages(ctx);
+    }
+
+    // ─── Pinned apps ──────────────────────────────────────────────────────────
 
     public static Set<String> getPinnedPackages(Context ctx) {
-        return new HashSet<>(getPrefs(ctx).getStringSet(KEY_PINNED_APPS, new HashSet<String>()));
+        return new HashSet<>(getPrefs(ctx).getStringSet(KEY_PINNED, new HashSet<String>()));
     }
 
     public static boolean isPackagePinned(Context ctx, String pkg) {
@@ -31,7 +43,7 @@ public class SettingsManager {
     public static void setPackagePinned(Context ctx, String pkg, boolean pinned) {
         Set<String> set = getPinnedPackages(ctx);
         if (pinned) set.add(pkg); else set.remove(pkg);
-        getPrefs(ctx).edit().putStringSet(KEY_PINNED_APPS, set).apply();
+        getPrefs(ctx).edit().putStringSet(KEY_PINNED, set).apply();
         applyLockTaskPackages(ctx);
     }
 
@@ -48,11 +60,11 @@ public class SettingsManager {
     // ─── Exit PIN ─────────────────────────────────────────────────────────────
 
     public static String getExitPin(Context ctx) {
-        return getPrefs(ctx).getString(KEY_EXIT_PIN, "1234");
+        return getPrefs(ctx).getString(KEY_PIN, "1234");
     }
 
     public static void setExitPin(Context ctx, String pin) {
-        getPrefs(ctx).edit().putString(KEY_EXIT_PIN, pin).apply();
+        getPrefs(ctx).edit().putString(KEY_PIN, pin).apply();
     }
 
     // ─── Device Owner ─────────────────────────────────────────────────────────
@@ -63,8 +75,8 @@ public class SettingsManager {
     }
 
     /**
-     * DevicePolicyManager'a izinli paketleri uygular.
-     * Bu metod çağrıldığında kiosk mod anında güncellenir.
+     * DevicePolicyManager'a izin verilen paketleri bildir.
+     * Çağrıldığında lock task mode sessizce çalışabilir hale gelir.
      */
     public static void applyLockTaskPackages(Context ctx) {
         if (!isDeviceOwner(ctx)) return;
@@ -72,13 +84,15 @@ public class SettingsManager {
             DevicePolicyManager dpm = (DevicePolicyManager) ctx.getSystemService(Context.DEVICE_POLICY_SERVICE);
             ComponentName admin = new ComponentName(ctx, PinDeviceAdminReceiver.class);
 
-            Set<String> pkgs = getPinnedPackages(ctx);
-            // Kendi paketimiz her zaman listede olmalı ki kiosktan çıkabilelim
-            pkgs.add(ctx.getPackageName());
+            Set<String> pkgs = new HashSet<>();
+            if (isMasterEnabled(ctx)) {
+                pkgs.addAll(getPinnedPackages(ctx));
+            }
+            pkgs.add(ctx.getPackageName()); // Kendi paketimiz her zaman listede
 
             dpm.setLockTaskPackages(admin, pkgs.toArray(new String[0]));
 
-            // API 28+: Home, Recents ve bildirim panelini kiosk modunda gizle
+            // Home / Recents / Bildirim panelini lock task modunda gizle
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                 dpm.setLockTaskFeatures(admin,
                         DevicePolicyManager.LOCK_TASK_FEATURE_KEYGUARD
