@@ -1,0 +1,600 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/bg_dark">
+
+    <!-- Top Header -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="16dp"
+        android:gravity="center_vertical">
+
+        <ImageView
+            android:layout_width="38dp"
+            android:layout_height="38dp"
+            android:src="@mipmap/ic_launcher"
+            android:layout_marginEnd="12dp" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/app_name"
+                android:textColor="@color/text_primary"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tv_header_subtitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Uygulama Sabitleyici v1.0"
+                android:textColor="@color/accent_cyan"
+                android:textSize="12sp" />
+
+        </LinearLayout>
+
+        <Switch
+            android:id="@+id/switch_master"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="true" />
+
+    </LinearLayout>
+
+    <!-- Status Banner Card -->
+    <LinearLayout
+        android:id="@+id/card_status"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="12dp"
+        android:orientation="vertical"
+        android:padding="14dp"
+        android:background="@drawable/badge_active">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/tv_status_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/status_active"
+                android:textColor="@color/accent_cyan"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tv_selected_summary"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0 Uygulama"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp" />
+
+        </LinearLayout>
+
+        <!-- Master Pause / Resume Action Button -->
+        <Button
+            android:id="@+id/btn_toggle_master"
+            android:layout_width="match_parent"
+            android:layout_height="38dp"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/btn_secondary"
+            android:text="Korumayı Duraklat"
+            android:textColor="@color/text_primary"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:textAllCaps="false" />
+
+        <!-- Warning container if permissions missing -->
+        <LinearLayout
+            android:id="@+id/layout_warnings"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="8dp"
+            android:visibility="gone">
+
+            <Button
+                android:id="@+id/btn_fix_accessibility"
+                android:layout_width="match_parent"
+                android:layout_height="36dp"
+                android:background="@drawable/btn_secondary"
+                android:text="⚠️ Erişilebilirlik İznini Aç"
+                android:textColor="@color/accent_cyan"
+                android:textSize="12sp"
+                android:textAllCaps="false"
+                android:layout_marginBottom="6dp" />
+
+            <Button
+                android:id="@+id/btn_fix_system_pin"
+                android:layout_width="match_parent"
+                android:layout_height="36dp"
+                android:background="@drawable/btn_secondary"
+                android:text="⚙️ Sistem Sabitleme Ayarını Aç"
+                android:textColor="@color/accent_cyan"
+                android:textSize="12sp"
+                android:textAllCaps="false" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- Navigation Tabs -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="12dp"
+        android:orientation="horizontal"
+        android:background="@drawable/search_bg"
+        android:padding="3dp">
+
+        <Button
+            android:id="@+id/tab_btn_apps"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="@drawable/card_bg"
+            android:text="@string/tab_apps"
+            android:textColor="@color/accent_cyan"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:textAllCaps="false" />
+
+        <Button
+            android:id="@+id/tab_btn_settings"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="@android:color/transparent"
+            android:text="@string/tab_settings"
+            android:textColor="@color/text_secondary"
+            android:textSize="13sp"
+            android:textAllCaps="false" />
+
+        <Button
+            android:id="@+id/tab_btn_guide"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="@android:color/transparent"
+            android:text="@string/tab_guide"
+            android:textColor="@color/text_secondary"
+            android:textSize="13sp"
+            android:textAllCaps="false" />
+
+    </LinearLayout>
+
+    <!-- Tab 1: Apps Content -->
+    <LinearLayout
+        android:id="@+id/view_tab_apps"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp">
+
+        <!-- Search Bar -->
+        <EditText
+            android:id="@+id/et_search"
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:background="@drawable/search_bg"
+            android:hint="@string/search_hint"
+            android:textColorHint="@color/text_muted"
+            android:textColor="@color/text_primary"
+            android:textSize="14sp"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:drawableStart="@android:drawable/ic_menu_search"
+            android:drawablePadding="10dp"
+            android:singleLine="true"
+            android:layout_marginBottom="12dp" />
+
+        <!-- App List -->
+        <ListView
+            android:id="@+id/list_apps"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:divider="@null"
+            android:dividerHeight="0dp"
+            android:scrollbarThumbVertical="@android:color/transparent" />
+
+    </LinearLayout>
+
+    <!-- Tab 2: Settings Content -->
+    <ScrollView
+        android:id="@+id/view_tab_settings"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="16dp"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- Card: Sabitleme Gecikmesi -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/card_bg"
+                android:padding="16dp"
+                android:layout_marginBottom="14dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Sabitleme Gecikmesi"
+                    android:textColor="@color/text_primary"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Uygulama açıldıktan sonra sabitlemenin tetikleneceği süre. (Samsung için 300 - 450 ms önerilir)."
+                    android:textColor="@color/text_secondary"
+                    android:textSize="13sp"
+                    android:layout_marginTop="4dp"
+                    android:layout_marginBottom="12dp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <SeekBar
+                        android:id="@+id/seek_delay"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:max="1000"
+                        android:progress="350" />
+
+                    <TextView
+                        android:id="@+id/tv_delay_val"
+                        android:layout_width="60dp"
+                        android:layout_height="wrap_content"
+                        android:text="350 ms"
+                        android:textColor="@color/accent_cyan"
+                        android:textSize="14sp"
+                        android:gravity="end"
+                        android:textStyle="bold" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- Card: Bildirim ve Titreşim -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/card_bg"
+                android:padding="16dp"
+                android:layout_marginBottom="14dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="12dp">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Sabitlendiğinde Titret"
+                            android:textColor="@color/text_primary"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Sabitleme başarılı olduğunda kısa bir titreşim verir."
+                            android:textColor="@color/text_secondary"
+                            android:textSize="12sp" />
+
+                    </LinearLayout>
+
+                    <Switch
+                        android:id="@+id/switch_vibrate"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:checked="true" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- Card: Sistem Güvenlik Ayarları -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/card_bg"
+                android:padding="16dp"
+                android:layout_marginBottom="14dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Sistem Kilit Ayarları"
+                    android:textColor="@color/text_primary"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Uygulama sabitlendiğinde çıkış yapılırken telefonun parolanızı/parmak izinizi sorması için Android ayarlarında PIN sorma seçeneği açık olmalıdır."
+                    android:textColor="@color/text_secondary"
+                    android:textSize="13sp"
+                    android:layout_marginTop="4dp"
+                    android:layout_marginBottom="12dp" />
+
+                <Button
+                    android:id="@+id/btn_open_security"
+                    android:layout_width="match_parent"
+                    android:layout_height="44dp"
+                    android:background="@drawable/btn_secondary"
+                    android:text="Güvenlik Ayarlarını Aç"
+                    android:textColor="@color/accent_cyan"
+                    android:textAllCaps="false" />
+
+            </LinearLayout>
+
+            <!-- Card: Geliştirici & İletişim / Hakkında -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/card_bg"
+                android:padding="16dp"
+                android:layout_marginBottom="24dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Geliştirici &amp; İletişim"
+                    android:textColor="@color/text_primary"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="PinMaster Uygulama Sabitleyici v1.0"
+                    android:textColor="@color/accent_cyan"
+                    android:textSize="12sp"
+                    android:layout_marginTop="2dp"
+                    android:layout_marginBottom="12dp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="8dp">
+
+                    <TextView
+                        android:layout_width="100dp"
+                        android:layout_height="wrap_content"
+                        android:text="Geliştirici:"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="13sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Ömer Güvercin"
+                        android:textColor="@color/text_primary"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="8dp">
+
+                    <TextView
+                        android:layout_width="100dp"
+                        android:layout_height="wrap_content"
+                        android:text="E-Posta:"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="13sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="omerguvercinn@gmail.com"
+                        android:textColor="@color/accent_cyan"
+                        android:textSize="13sp" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="100dp"
+                        android:layout_height="wrap_content"
+                        android:text="WhatsApp:"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="13sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@omerguvercinn"
+                        android:textColor="@color/accent_green"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </ScrollView>
+
+    <!-- Tab 3: Guide Content -->
+    <ScrollView
+        android:id="@+id/view_tab_guide"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="16dp"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- Card 1: Nasıl Çalışır -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/card_bg"
+                android:padding="16dp"
+                android:layout_marginBottom="14dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="📌 PinMaster Nasıl Çalışır?"
+                    android:textColor="@color/accent_cyan"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="PinMaster, seçtiğiniz uygulamalar (Instagram, WhatsApp, Bankacılık vb.) açıldığı anda otomatik olarak Android'in yerel 'Uygulamayı Sabitle' (Screen Pinning) modunu devreye sokar.\n\nBöylece telefonunuzu verdiğiniz bir kişi ya da çocuk, açık olan uygulamadan ana ekrana dönemez, bildirim panelini açamaz veya başka bir uygulamaya geçemez."
+                    android:textColor="@color/text_secondary"
+                    android:textSize="13sp"
+                    android:layout_marginTop="8dp" />
+
+            </LinearLayout>
+
+            <!-- Card 2: Sabitlemeden Nasıl Çıkılır? -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/card_bg"
+                android:padding="16dp"
+                android:layout_marginBottom="14dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🔓 Sabitlemeden Nasıl Çıkılır?"
+                    android:textColor="@color/accent_violet"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Telefonunuzun navigasyon türüne göre:\n\n• 3 Tuşlu Gezinme Kullanıyorsanız:\n  Geri (◁) ve Son Uygulamalar (|||) tuşlarına AYNI ANDA basılı tutun.\n\n• Kaydırma Hareketleri (Jestler) Kullanıyorsanız:\n  Ekranın altından yukarı doğru kaydırıp parmağınızı 1 saniye basılı tutun.\n\nÇıkış yaptığınızda telefon kilit ekranına geçer ve parmak izinizi/PIN kodunuzu ister."
+                    android:textColor="@color/text_secondary"
+                    android:textSize="13sp"
+                    android:layout_marginTop="8dp" />
+
+            </LinearLayout>
+
+            <!-- Card 3: Markalara Göre Kurulum -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/card_bg"
+                android:padding="16dp"
+                android:layout_marginBottom="14dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="📱 Farklı Telefonlarda Kurulum"
+                    android:textColor="@color/accent_green"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Samsung (Galaxy S23/S24 vb.):\n1. Ayarlar ➔ Güvenlik ve Gizlilik ➔ Diğer güvenlik ayarları ➔ Uygulamayı sabitle seçeneğini AÇIK yapın.\n2. 'Sabitlemeyi kaldırmadan önce PIN sor' seçeneğini aktif edin.\n\nXiaomi / Redmi / POCO (HyperOS / MIUI):\n1. Ayarlar ➔ Güvenlik ➔ Ekran Sabitleme'yi açın.\n2. Pil optimizasyonunda PinMaster için 'Kısıtlama Yok' seçin.\n\nGoogle Pixel &amp; Saf Android:\n1. Ayarlar ➔ Güvenlik ➔ Gelişmiş ➔ Uygulama sabitleme'yi açın."
+                    android:textColor="@color/text_secondary"
+                    android:textSize="13sp"
+                    android:layout_marginTop="8dp" />
+
+            </LinearLayout>
+
+            <!-- Card 4: Play Store &amp; Gizlilik -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/card_bg"
+                android:padding="16dp"
+                android:layout_marginBottom="24dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🛡️ Gizlilik ve Güvenlik"
+                    android:textColor="@color/text_primary"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="PinMaster %100 çevrimdışı (offline) çalışır. Hiçbir internet izni istemez, verilerinizi sunuculara göndermez ve cihazınızda pil tüketmez. Google Play Store politikalarına tam uyumludur."
+                    android:textColor="@color/text_muted"
+                    android:textSize="12sp"
+                    android:layout_marginTop="6dp" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </ScrollView>
+
+</LinearLayout>

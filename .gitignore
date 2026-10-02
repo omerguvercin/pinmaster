@@ -1,0 +1,25 @@
+# Build outputs
+build/
+*.apk
+*.idsig
+*.aab
+
+# IDE files
+.idea/
+*.iml
+.gradle/
+local.properties
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Scratch / debug files
+dump_*.xml
+btn_test.xml
+pm.xml
+pm_screen.xml
+new_pm.xml
+tapped.xml
+test_pin.sh
+build_apk.py

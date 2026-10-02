@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">PinMaster</string>
+    <string name="accessibility_service_name">PinMaster Otomatik Sabitleme</string>
+    <string name="accessibility_service_description">Seçtiğiniz uygulamalar (Instagram, Bankacılık vb.) açıldığında otomatik olarak sabitleme (Pin App) işlemini tetikler. Bu servis kişisel verilerinizi toplamaz ve internete aktarmaz.</string>
+    
+    <string name="device_admin_label">PinMaster Kiosk Yöneticisi</string>
+    <string name="device_admin_description">Gelişmiş kurumsal kiosk sabitleme modu için isteğe bağlı cihaz yöneticisi yetkisi.</string>
+    
+    <string name="tab_apps">Havuz</string>
+    <string name="tab_settings">Ayarlar</string>
+    <string name="tab_guide">Kılavuz</string>
+    
+    <string name="status_active">OTOMATİK SABİTLEME AKTİF</string>
+    <string name="status_inactive">SABİTLEME DEVRE DIŞI</string>
+    
+    <string name="perm_accessibility_title">Erişilebilirlik Servisi</string>
+    <string name="perm_accessibility_desc">Uygulamaların açıldığını algılamak için gereklidir.</string>
+    <string name="perm_system_pin_title">Sistem Sabitleme Ayarı</string>
+    <string name="perm_system_pin_desc">Android güvenlik ayarlarında sabitlemenin açık olması gerekir.</string>
+    <string name="perm_btn_grant">İzni Etkinleştir</string>
+    <string name="perm_btn_granted">Etkin</string>
+    <string name="perm_btn_open_settings">Ayara Git</string>
+
+    <string name="search_hint">Uygulama ara...</string>
+    <string name="selected_apps_count">%d Uygulama Seçili</string>
+    <string name="filter_all">Tümü</string>
+    <string name="filter_selected">Seçilenler</string>
+    <string name="toast_pinned">PinMaster: %s sabitlendi!</string>
+</resources>
