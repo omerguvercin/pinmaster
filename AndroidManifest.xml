@@ -35,18 +35,7 @@
             </intent-filter>
         </activity>
 
-        <!--
-             GuardActivity — görünmez arka plan kilidi.
-             Pinlenmiş uygulama açıldığında arka planda startLockTask() çalıştırır.
-             Kullanıcı uygulamadan çıkmaya çalışınca öne gelir ve guard ekranını gösterir.
-        -->
-        <activity
-            android:name=".GuardActivity"
-            android:exported="false"
-            android:excludeFromRecents="true"
-            android:launchMode="singleTask"
-            android:configChanges="orientation|screenSize"
-            android:theme="@style/Theme.PinMaster"/>
+
 
         <!--
              PinAccessibilityService — uygulama açılışlarını izler.
