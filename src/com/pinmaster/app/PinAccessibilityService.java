@@ -31,6 +31,8 @@ public class PinAccessibilityService extends AccessibilityService {
     // Kullanıcı şu anda korunan uygulamanın içinde mi?
     private static volatile boolean isInsideProtectedApp = false;
     private static volatile String activeGuardedPkg = null;
+    private static volatile long lastGuardedAppLaunchTime = 0;
+    private static final long LAUNCH_GRACE_PERIOD_MS = 2500;
 
     private WindowManager windowManager;
     private View overlayView;
@@ -86,6 +88,7 @@ public class PinAccessibilityService extends AccessibilityService {
         if (SettingsManager.isPackagePinned(this, currentPkg)) {
             isInsideProtectedApp = true;
             activeGuardedPkg = currentPkg;
+            lastGuardedAppLaunchTime = android.os.SystemClock.uptimeMillis();
             hideOverlay();
             return;
         }
@@ -96,6 +99,11 @@ public class PinAccessibilityService extends AccessibilityService {
             if (currentPkg.equals(activeGuardedPkg)) {
                 // Hâlâ korunan uygulamanın içinde
                 hideOverlay();
+                return;
+            }
+
+            // Uygulama yeni açılırken veya uygulamaya dönülürken oluşan sistem/animasyon geçişlerini yoksay
+            if (android.os.SystemClock.uptimeMillis() - lastGuardedAppLaunchTime < LAUNCH_GRACE_PERIOD_MS) {
                 return;
             }
 
@@ -299,11 +307,14 @@ public class PinAccessibilityService extends AccessibilityService {
     }
 
     private void returnToGuardedApp(String pkg) {
+        lastGuardedAppLaunchTime = android.os.SystemClock.uptimeMillis();
         if (pkg != null) {
             Intent launch = getPackageManager().getLaunchIntentForPackage(pkg);
             if (launch != null) {
                 launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-                startActivity(launch);
+                try {
+                    startActivity(launch);
+                } catch (Exception ignored) {}
             }
         }
         hideOverlay();
@@ -329,14 +340,20 @@ public class PinAccessibilityService extends AccessibilityService {
         if (pkg.equals(getPackageName())) return true;
         // Android çekirdek
         if (pkg.equals("android")) return true;
+        // System UI (ses seviyesi çubuğu, bildirim bannerları - kullanıcı başka uygulamaya basmadıkça oyunu bölmemeli)
+        if (pkg.equals("com.android.systemui")) return true;
         // Google Play Hizmetleri ve Oyun servisleri
         if (pkg.startsWith("com.google.android.gms") || pkg.startsWith("com.google.android.play.games")) return true;
-        // Samsung Game Booster / Game Tools
-        if (pkg.startsWith("com.samsung.android.game")) return true;
+        // Google Play Store & Webview / Reklam pencereleri
+        if (pkg.equals("com.android.vending") || pkg.equals("com.google.android.webview") || pkg.startsWith("org.chromium")) return true;
+        // İzin onay diyaloğu (mikrofon, kamera izinleri)
+        if (pkg.contains("permissioncontroller")) return true;
+        // Samsung Game Booster / Game Tools / GOS / GameDriver
+        if (pkg.startsWith("com.samsung.android.game") || pkg.startsWith("com.samsung.gamedriver")) return true;
         // Telefon görüşmesi arayüzleri
         if (pkg.contains("incallui") || pkg.contains("telecom") || pkg.contains("dialer")) return true;
         // Klavyeler
-        if (pkg.contains("inputmethod") || pkg.contains("honeyboard") || pkg.contains("latin")) return true;
+        if (pkg.contains("inputmethod") || pkg.contains("honeyboard") || pkg.contains("latin") || pkg.contains("keyboard")) return true;
         // Kimlik doğrulama / Autofill
         if (pkg.contains("autofill") || pkg.contains("credentials")) return true;
 
