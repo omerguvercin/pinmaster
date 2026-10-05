@@ -97,6 +97,14 @@ public class PinAccessibilityService extends AccessibilityService {
                 return;
             }
 
+            // Kalkan açıkken bildirim paneli çekilmeye çalışılırsa otomatik kapat
+            if (isOverlayShowing && currentPkg.equals("com.android.systemui")) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    performGlobalAction(GLOBAL_ACTION_DISMISS_NOTIFICATION_SHADE);
+                }
+                return;
+            }
+
             // Kullanıcı gerçekten uygulamadan çıktı -> Kalkanı (Overlay) göster!
             showOverlay(sActiveGuardedPkg);
         }
@@ -152,10 +160,10 @@ public class PinAccessibilityService extends AccessibilityService {
                         WindowManager.LayoutParams.MATCH_PARENT,
                         WindowManager.LayoutParams.MATCH_PARENT,
                         WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-                        WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
-                                | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
+                        WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
                                 | WindowManager.LayoutParams.FLAG_FULLSCREEN
-                                | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+                                | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
+                                | WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
                         PixelFormat.TRANSLUCENT
                 );
                 params.gravity = Gravity.CENTER;
