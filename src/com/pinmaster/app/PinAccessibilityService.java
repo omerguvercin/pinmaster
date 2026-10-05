@@ -84,40 +84,18 @@ public class PinAccessibilityService extends AccessibilityService {
         }
 
         // ─── 1. DURUM: KORUNAN UYGULAMA AÇILDI ───
-        // Uygulama ŞİFRESİZ ve ÖZGÜRCE AÇILIR! Ekrana ASLA kalkan gelmez.
         if (SettingsManager.isPackagePinned(this, currentPkg)) {
             isInsideProtectedApp = true;
             activeGuardedPkg = currentPkg;
-            lastGuardedAppLaunchTime = android.os.SystemClock.uptimeMillis();
             hideOverlay();
             return;
         }
 
-        // ─── 2. DURUM: KULLANICI UYGULAMADAN ÇIKMAYA ÇALIŞTI ───
-        // Kullanıcı korunan uygulamanın içindeyken Home/Recents'e basıp ana ekrana veya başka uygulamaya geçmek istedi!
-        if (isInsideProtectedApp && activeGuardedPkg != null) {
-            if (currentPkg.equals(activeGuardedPkg)) {
-                // Hâlâ korunan uygulamanın içinde
-                hideOverlay();
-                return;
-            }
-
-            // Uygulama yeni açılırken veya uygulamaya dönülürken oluşan sistem/animasyon geçişlerini yoksay
-            if (android.os.SystemClock.uptimeMillis() - lastGuardedAppLaunchTime < LAUNCH_GRACE_PERIOD_MS) {
-                return;
-            }
-
-            // Kalkan açıkken bildirim paneli çekilirse otomatik kapat
-            if (isOverlayShowing && currentPkg.equals("com.android.systemui")) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                    performGlobalAction(GLOBAL_ACTION_DISMISS_NOTIFICATION_SHADE);
-                }
-                return;
-            }
-
-            // Kullanıcı dışarı çıktı -> ÇIKIŞI ENGELLE, KALKANI GÖSTER!
-            showOverlay(activeGuardedPkg);
-        }
+        // ─── 2. DURUM: UYGULAMA İÇİ YA DA GEÇİŞ DURUMLARI ───
+        // ADB Yerel Sabitleme (Screen Pinning / am task lock) devrede olduğu için
+        // sisteme fazladan kalkan çizdirilmez. Tüm uygulamalar (Instagram, Angela vb.)
+        // merkezi ve eşit şekilde doğrudan işletim sistemi tarafından sabitlenir.
+        hideOverlay();
     }
 
     // ─── Key Event Filtering ──────────────────────────────────────────────────
