@@ -28,8 +28,9 @@ import android.widget.TextView;
 
 public class PinAccessibilityService extends AccessibilityService {
 
-    private static volatile boolean sIsGuardActive = false;
-    private static volatile String sActiveGuardedPkg = null;
+    // Kullanıcı şu anda korunan uygulamanın içinde mi?
+    private static volatile boolean isInsideProtectedApp = false;
+    private static volatile String activeGuardedPkg = null;
 
     private WindowManager windowManager;
     private View overlayView;
@@ -62,42 +63,43 @@ public class PinAccessibilityService extends AccessibilityService {
         if (pkgSeq == null) return;
         String currentPkg = pkgSeq.toString();
 
-        // Kendi uygulamamız veya sistem iç süreçleri ise yoksay
+        // Kendi uygulamamız veya sistem iç süreçleri (Play Games, Game Booster, klavye vb.) yoksay
         if (isSystemOrOverlayExempt(currentPkg)) {
             return;
         }
 
         // Ana anahtar kapalıysa korumayı sıfırla
         if (!SettingsManager.isMasterEnabled(this)) {
-            sIsGuardActive = false;
-            sActiveGuardedPkg = null;
+            isInsideProtectedApp = false;
+            activeGuardedPkg = null;
             hideOverlay();
             return;
         }
 
-        // Telefon kilit ekranındaysa veya ekran kapalıysa müdahale etme
+        // Telefon ekranı kapalı veya kilit ekranındaysa müdahale etme
         if (isScreenOffOrKeyguard()) {
             return;
         }
 
-        // 1. Durum: Kullanıcı korunan uygulamalardan birini açtı
+        // ─── 1. DURUM: KORUNAN UYGULAMA AÇILDI ───
+        // Uygulama ŞİFRESİZ ve ÖZGÜRCE AÇILIR! Ekrana ASLA kalkan gelmez.
         if (SettingsManager.isPackagePinned(this, currentPkg)) {
-            sActiveGuardedPkg = currentPkg;
-            sIsGuardActive = true;
+            isInsideProtectedApp = true;
+            activeGuardedPkg = currentPkg;
             hideOverlay();
             return;
         }
 
-        // 2. Durum: Koruma aktifken kullanıcı korunan uygulamanın DIŞINA çıktı
-        // (Ana ekrana [Launcher] veya başka bir kullanıcı uygulamasına geçildiğinde)
-        if (sIsGuardActive && sActiveGuardedPkg != null) {
-            if (currentPkg.equals(sActiveGuardedPkg)) {
+        // ─── 2. DURUM: KULLANICI UYGULAMADAN ÇIKMAYA ÇALIŞTI ───
+        // Kullanıcı korunan uygulamanın içindeyken Home/Recents'e basıp ana ekrana veya başka uygulamaya geçmek istedi!
+        if (isInsideProtectedApp && activeGuardedPkg != null) {
+            if (currentPkg.equals(activeGuardedPkg)) {
                 // Hâlâ korunan uygulamanın içinde
                 hideOverlay();
                 return;
             }
 
-            // Kalkan açıkken bildirim paneli çekilmeye çalışılırsa otomatik kapat
+            // Kalkan açıkken bildirim paneli çekilirse otomatik kapat
             if (isOverlayShowing && currentPkg.equals("com.android.systemui")) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                     performGlobalAction(GLOBAL_ACTION_DISMISS_NOTIFICATION_SHADE);
@@ -105,8 +107,8 @@ public class PinAccessibilityService extends AccessibilityService {
                 return;
             }
 
-            // Kullanıcı gerçekten uygulamadan çıktı -> Kalkanı (Overlay) göster!
-            showOverlay(sActiveGuardedPkg);
+            // Kullanıcı dışarı çıktı -> ÇIKIŞI ENGELLE, KALKANI GÖSTER!
+            showOverlay(activeGuardedPkg);
         }
     }
 
@@ -119,11 +121,11 @@ public class PinAccessibilityService extends AccessibilityService {
             // Geri tuşu -> Uygulamaya geri döndür
             if (code == KeyEvent.KEYCODE_BACK) {
                 if (event.getAction() == KeyEvent.ACTION_UP) {
-                    mainHandler.post(() -> returnToGuardedApp(sActiveGuardedPkg));
+                    mainHandler.post(() -> returnToGuardedApp(activeGuardedPkg));
                 }
                 return true;
             }
-            // Home veya Son Uygulamalar (Recents) donanım tuşları -> Tamamen yut
+            // Home veya Son Uygulamalar donanım tuşları -> Tamamen yut
             if (code == KeyEvent.KEYCODE_HOME || code == KeyEvent.KEYCODE_APP_SWITCH) {
                 return true;
             }
@@ -277,21 +279,14 @@ public class PinAccessibilityService extends AccessibilityService {
     private void verifyPin() {
         String correct = SettingsManager.getExitPin(this);
         if (enteredPin.toString().equals(correct)) {
-            // Başarılı PIN -> Korumayı tamamen sonlandır
+            // Başarılı PIN -> Korumadan çıkışa izin ver!
             if (SettingsManager.isVibrateEnabled(this)) {
                 vibrate(120);
             }
-            sIsGuardActive = false;
-            sActiveGuardedPkg = null;
+            isInsideProtectedApp = false;
+            activeGuardedPkg = null;
             hideOverlay();
-
-            // Kullanıcıyı doğrudan ve güvenle Ana Ekrana yönlendir
-            try {
-                Intent home = new Intent(Intent.ACTION_MAIN);
-                home.addCategory(Intent.CATEGORY_HOME);
-                home.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(home);
-            } catch (Exception ignored) {}
+            // Artık kalkan tamamen kapandı, kullanıcı ana ekranda tamamen serbest!
         } else {
             // Hatalı PIN
             if (SettingsManager.isVibrateEnabled(this)) {
@@ -312,6 +307,7 @@ public class PinAccessibilityService extends AccessibilityService {
             }
         }
         hideOverlay();
+        // isInsideProtectedApp true kalır, çünkü kullanıcı tekrar korunan uygulamanın içinde!
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────
@@ -331,9 +327,9 @@ public class PinAccessibilityService extends AccessibilityService {
         if (pkg == null) return true;
         // Kendi uygulamamız
         if (pkg.equals(getPackageName())) return true;
-        // Android çekirdek ve sistem arayüzü
-        if (pkg.equals("android") || pkg.equals("com.android.systemui")) return true;
-        // Google Play Hizmetleri ve Oyun servisleri (Oyun açılışlarında pencere değişimi tetikler)
+        // Android çekirdek
+        if (pkg.equals("android")) return true;
+        // Google Play Hizmetleri ve Oyun servisleri
         if (pkg.startsWith("com.google.android.gms") || pkg.startsWith("com.google.android.play.games")) return true;
         // Samsung Game Booster / Game Tools
         if (pkg.startsWith("com.samsung.android.game")) return true;
@@ -376,8 +372,8 @@ public class PinAccessibilityService extends AccessibilityService {
 
     @Override
     public void onInterrupt() {
-        sIsGuardActive = false;
-        sActiveGuardedPkg = null;
+        isInsideProtectedApp = false;
+        activeGuardedPkg = null;
         hideOverlay();
     }
 
