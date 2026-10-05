@@ -88,6 +88,11 @@ public class PinAccessibilityService extends AccessibilityService {
             isInsideProtectedApp = true;
             activeGuardedPkg = currentPkg;
             hideOverlay();
+
+            // Shizuku aktifse arka plan kilit ajanını anında uyandır
+            if (ShizukuHelper.hasPermission()) {
+                ShizukuHelper.ensureAgentRunning();
+            }
             return;
         }
 

@@ -58,6 +58,27 @@ public class MainActivity extends Activity {
         setupSettings();
         setupSearch();
         loadInstalledApps();
+        setupShizuku();
+    }
+
+    private void setupShizuku() {
+        try {
+            rikka.shizuku.Shizuku.addBinderReceivedListenerSticky(() -> {
+                if (ShizukuHelper.hasPermission()) {
+                    ShizukuHelper.ensureAgentRunning();
+                } else {
+                    ShizukuHelper.requestPermission(ShizukuHelper.REQUEST_CODE_SHIZUKU);
+                }
+                runOnUiThread(this::updateStatus);
+            });
+
+            rikka.shizuku.Shizuku.addRequestPermissionResultListener((requestCode, grantResult) -> {
+                if (requestCode == ShizukuHelper.REQUEST_CODE_SHIZUKU && grantResult == PackageManager.PERMISSION_GRANTED) {
+                    ShizukuHelper.ensureAgentRunning();
+                    runOnUiThread(this::updateStatus);
+                }
+            });
+        } catch (Throwable ignored) {}
     }
 
     @Override
@@ -111,7 +132,6 @@ public class MainActivity extends Activity {
     private void updateStatus() {
         boolean masterEnabled  = SettingsManager.isMasterEnabled(this);
         boolean accessEnabled  = isAccessibilityEnabled();
-        boolean overlayEnabled = Settings.canDrawOverlays(this);
 
         if (!masterEnabled) {
             tvStatusTitle.setText("⏸  Kalkan Duraklatıldı");
@@ -123,22 +143,29 @@ public class MainActivity extends Activity {
             tvStatusDesc.setText("'Erişilebilirliği Aç' butonuna basıp PinMaster'ı etkinleştirin.");
             cardStatus.setBackgroundResource(R.drawable.badge_inactive);
             tvAdbCommand.setVisibility(View.GONE);
-        } else if (!overlayEnabled) {
-            tvStatusTitle.setText("⚠️  Üstte Gösterme İzni Gerekli");
-            tvStatusDesc.setText("Kalkanın Home tuşundan etkilenmemesi için 'Üstte Göster' iznini açın.");
+        } else if (!ShizukuHelper.isShizukuAvailable()) {
+            tvStatusTitle.setText("⚡  Shizuku Servisi Başlatılmadı");
+            tvStatusDesc.setText("Yerel sabitleme için Shizuku uygulamasını açıp 'Başlat'a dokunun ya da bilgisayardan başlatın.");
             cardStatus.setBackgroundResource(R.drawable.badge_inactive);
             tvAdbCommand.setVisibility(View.VISIBLE);
-            tvAdbCommand.setText("👉 İzni Açmak İçin Dokunun");
+            tvAdbCommand.setText("👉 Shizuku Uygulamasını Aç");
             tvAdbCommand.setOnClickListener(v -> {
-                Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                        android.net.Uri.parse("package:" + getPackageName()));
-                startActivity(intent);
+                Intent launch = getPackageManager().getLaunchIntentForPackage("moe.shizuku.privileged.api");
+                if (launch != null) startActivity(launch);
             });
+        } else if (!ShizukuHelper.hasPermission()) {
+            tvStatusTitle.setText("🔑  Shizuku İzni Gerekli");
+            tvStatusDesc.setText("PinMaster'ın kilit komutunu gönderebilmesi için Shizuku iznini onaylayın.");
+            cardStatus.setBackgroundResource(R.drawable.badge_inactive);
+            tvAdbCommand.setVisibility(View.VISIBLE);
+            tvAdbCommand.setText("👉 İzin İste");
+            tvAdbCommand.setOnClickListener(v -> ShizukuHelper.requestPermission(ShizukuHelper.REQUEST_CODE_SHIZUKU));
         } else {
-            tvStatusTitle.setText("🛡️  Sistem Kalkanı Aktif");
-            tvStatusDesc.setText("Seçilen uygulamalardan çıkış koruma altında. Home tuşu ve sızıntılar engellendi.");
+            tvStatusTitle.setText("🛡️  Yerel Sabitleme ve Shizuku Aktif");
+            tvStatusDesc.setText("Tüm kilitler hazır! Seçilen uygulamalar doğrudan ve şifresiz yerel olarak kilitlenecek.");
             cardStatus.setBackgroundResource(R.drawable.badge_active);
             tvAdbCommand.setVisibility(View.GONE);
+            ShizukuHelper.ensureAgentRunning();
         }
 
         switchMaster.setChecked(masterEnabled);
