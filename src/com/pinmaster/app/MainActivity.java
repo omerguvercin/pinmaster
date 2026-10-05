@@ -123,15 +123,9 @@ public class MainActivity extends Activity {
             tvStatusDesc.setText("'Erişilebilirliği Aç' butonuna basıp PinMaster'ı etkinleştirin.");
             cardStatus.setBackgroundResource(R.drawable.badge_inactive);
             tvAdbCommand.setVisibility(View.GONE);
-        } else if (!isOwner) {
-            tvStatusTitle.setText("⚙️  Sessiz Mod İçin Kurulum Gerekli");
-            tvStatusDesc.setText("Temel koruma çalışıyor. Sessiz (diyalogsuz) mod için:");
-            cardStatus.setBackgroundResource(R.drawable.badge_inactive);
-            tvAdbCommand.setVisibility(View.VISIBLE);
-            tvAdbCommand.setText("adb shell dpm set-device-owner com.pinmaster.app/.PinDeviceAdminReceiver");
         } else {
-            tvStatusTitle.setText("✅  Koruma Aktif");
-            tvStatusDesc.setText("Otomatik sessiz kilitleme açık. Boot sonrası otomatik başlar.");
+            tvStatusTitle.setText("✅  Kalkan Aktif");
+            tvStatusDesc.setText("Seçilen uygulamalardan çıkış koruma altında. Boot sonrası otomatik çalışır.");
             cardStatus.setBackgroundResource(R.drawable.badge_active);
             tvAdbCommand.setVisibility(View.GONE);
         }

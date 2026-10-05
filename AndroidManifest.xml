@@ -35,7 +35,14 @@
             </intent-filter>
         </activity>
 
-
+        <!-- Kilit Ekranı (AppLock Kalkanı) -->
+        <activity
+            android:name=".LockActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:launchMode="singleTask"
+            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:theme="@style/Theme.PinMaster" />
 
         <!--
              PinAccessibilityService — uygulama açılışlarını izler.
