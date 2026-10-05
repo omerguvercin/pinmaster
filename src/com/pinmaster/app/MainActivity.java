@@ -109,23 +109,34 @@ public class MainActivity extends Activity {
     // ─── Status card ──────────────────────────────────────────────────────────
 
     private void updateStatus() {
-        boolean isOwner       = SettingsManager.isDeviceOwner(this);
-        boolean masterEnabled = SettingsManager.isMasterEnabled(this);
-        boolean accessEnabled = isAccessibilityEnabled();
+        boolean masterEnabled  = SettingsManager.isMasterEnabled(this);
+        boolean accessEnabled  = isAccessibilityEnabled();
+        boolean overlayEnabled = Settings.canDrawOverlays(this);
 
         if (!masterEnabled) {
-            tvStatusTitle.setText("⏸  Koruma Duraklatıldı");
-            tvStatusDesc.setText("Otomatik kilitleme geçici olarak devre dışı.");
+            tvStatusTitle.setText("⏸  Kalkan Duraklatıldı");
+            tvStatusDesc.setText("Otomatik koruma geçici olarak devre dışı.");
             cardStatus.setBackgroundResource(R.drawable.badge_inactive);
             tvAdbCommand.setVisibility(View.GONE);
         } else if (!accessEnabled) {
-            tvStatusTitle.setText("⚠️  Erişilebilirlik Gerekli");
+            tvStatusTitle.setText("⚠️  Erişilebilirlik İzni Gerekli");
             tvStatusDesc.setText("'Erişilebilirliği Aç' butonuna basıp PinMaster'ı etkinleştirin.");
             cardStatus.setBackgroundResource(R.drawable.badge_inactive);
             tvAdbCommand.setVisibility(View.GONE);
+        } else if (!overlayEnabled) {
+            tvStatusTitle.setText("⚠️  Üstte Gösterme İzni Gerekli");
+            tvStatusDesc.setText("Kalkanın Home tuşundan etkilenmemesi için 'Üstte Göster' iznini açın.");
+            cardStatus.setBackgroundResource(R.drawable.badge_inactive);
+            tvAdbCommand.setVisibility(View.VISIBLE);
+            tvAdbCommand.setText("👉 İzni Açmak İçin Dokunun");
+            tvAdbCommand.setOnClickListener(v -> {
+                Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                        android.net.Uri.parse("package:" + getPackageName()));
+                startActivity(intent);
+            });
         } else {
-            tvStatusTitle.setText("✅  Kalkan Aktif");
-            tvStatusDesc.setText("Seçilen uygulamalardan çıkış koruma altında. Boot sonrası otomatik çalışır.");
+            tvStatusTitle.setText("🛡️  Sistem Kalkanı Aktif");
+            tvStatusDesc.setText("Seçilen uygulamalardan çıkış koruma altında. Home tuşu ve sızıntılar engellendi.");
             cardStatus.setBackgroundResource(R.drawable.badge_active);
             tvAdbCommand.setVisibility(View.GONE);
         }

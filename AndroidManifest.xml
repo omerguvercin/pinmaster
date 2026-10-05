@@ -12,6 +12,7 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
     <application
         android:allowBackup="true"
@@ -35,14 +36,7 @@
             </intent-filter>
         </activity>
 
-        <!-- Kilit Ekranı (AppLock Kalkanı) -->
-        <activity
-            android:name=".LockActivity"
-            android:exported="false"
-            android:excludeFromRecents="true"
-            android:launchMode="singleTask"
-            android:configChanges="orientation|screenSize|keyboardHidden"
-            android:theme="@style/Theme.PinMaster" />
+
 
         <!--
              PinAccessibilityService — uygulama açılışlarını izler.
