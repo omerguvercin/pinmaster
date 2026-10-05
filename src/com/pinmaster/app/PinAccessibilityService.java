@@ -62,8 +62,8 @@ public class PinAccessibilityService extends AccessibilityService {
         if (pkgSeq == null) return;
         String currentPkg = pkgSeq.toString();
 
-        // Kendi uygulamamız ise yoksay
-        if (currentPkg.equals(getPackageName())) {
+        // Kendi uygulamamız veya sistem iç süreçleri ise yoksay
+        if (isSystemOrOverlayExempt(currentPkg)) {
             return;
         }
 
@@ -80,11 +80,6 @@ public class PinAccessibilityService extends AccessibilityService {
             return;
         }
 
-        // Telefon çağrısı veya klavye ise atla
-        if (isExemptSystemPackage(currentPkg)) {
-            return;
-        }
-
         // 1. Durum: Kullanıcı korunan uygulamalardan birini açtı
         if (SettingsManager.isPackagePinned(this, currentPkg)) {
             sActiveGuardedPkg = currentPkg;
@@ -93,14 +88,16 @@ public class PinAccessibilityService extends AccessibilityService {
             return;
         }
 
-        // 2. Durum: Koruma aktifken kullanıcı korunan uygulamanın dışına çıktı
+        // 2. Durum: Koruma aktifken kullanıcı korunan uygulamanın DIŞINA çıktı
+        // (Ana ekrana [Launcher] veya başka bir kullanıcı uygulamasına geçildiğinde)
         if (sIsGuardActive && sActiveGuardedPkg != null) {
-            // Bildirim paneli çekildiyse engelleme
-            if (currentPkg.equals("com.android.systemui")) {
+            if (currentPkg.equals(sActiveGuardedPkg)) {
+                // Hâlâ korunan uygulamanın içinde
+                hideOverlay();
                 return;
             }
 
-            // Korunan uygulamanın dışına çıkıldı -> Kalkanı (Overlay) göster!
+            // Kullanıcı gerçekten uygulamadan çıktı -> Kalkanı (Overlay) göster!
             showOverlay(sActiveGuardedPkg);
         }
     }
@@ -272,13 +269,21 @@ public class PinAccessibilityService extends AccessibilityService {
     private void verifyPin() {
         String correct = SettingsManager.getExitPin(this);
         if (enteredPin.toString().equals(correct)) {
-            // Başarılı PIN -> Korumayı kaldır
+            // Başarılı PIN -> Korumayı tamamen sonlandır
             if (SettingsManager.isVibrateEnabled(this)) {
                 vibrate(120);
             }
             sIsGuardActive = false;
             sActiveGuardedPkg = null;
             hideOverlay();
+
+            // Kullanıcıyı doğrudan ve güvenle Ana Ekrana yönlendir
+            try {
+                Intent home = new Intent(Intent.ACTION_MAIN);
+                home.addCategory(Intent.CATEGORY_HOME);
+                home.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(home);
+            } catch (Exception ignored) {}
         } else {
             // Hatalı PIN
             if (SettingsManager.isVibrateEnabled(this)) {
@@ -314,14 +319,23 @@ public class PinAccessibilityService extends AccessibilityService {
         return false;
     }
 
-    private boolean isExemptSystemPackage(String pkg) {
+    private boolean isSystemOrOverlayExempt(String pkg) {
         if (pkg == null) return true;
-        if (pkg.contains("incallui") || pkg.contains("telecom") || pkg.contains("dialer")) {
-            return true;
-        }
-        if (pkg.contains("inputmethod") || pkg.contains("honeyboard") || pkg.contains("latin")) {
-            return true;
-        }
+        // Kendi uygulamamız
+        if (pkg.equals(getPackageName())) return true;
+        // Android çekirdek ve sistem arayüzü
+        if (pkg.equals("android") || pkg.equals("com.android.systemui")) return true;
+        // Google Play Hizmetleri ve Oyun servisleri (Oyun açılışlarında pencere değişimi tetikler)
+        if (pkg.startsWith("com.google.android.gms") || pkg.startsWith("com.google.android.play.games")) return true;
+        // Samsung Game Booster / Game Tools
+        if (pkg.startsWith("com.samsung.android.game")) return true;
+        // Telefon görüşmesi arayüzleri
+        if (pkg.contains("incallui") || pkg.contains("telecom") || pkg.contains("dialer")) return true;
+        // Klavyeler
+        if (pkg.contains("inputmethod") || pkg.contains("honeyboard") || pkg.contains("latin")) return true;
+        // Kimlik doğrulama / Autofill
+        if (pkg.contains("autofill") || pkg.contains("credentials")) return true;
+
         return false;
     }
 
