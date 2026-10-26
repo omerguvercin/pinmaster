@@ -77,30 +77,62 @@ public class SettingsManager {
 
     public static void syncTargetsToFile(Context context) {
         try {
-            File dir = context.getExternalFilesDir(null);
-            if (dir == null) return;
-
-            File targetFile = new File(dir, "pin_targets.txt");
             Set<String> pkgs = getPinnedPackages(context);
             boolean master = isMasterEnabled(context);
 
             StringBuilder sb = new StringBuilder();
             if (master) {
                 for (String p : pkgs) {
-                    sb.append(p.trim()).append("\n");
+                    if (p != null && !p.trim().isEmpty()) {
+                        sb.append(p.trim()).append("\n");
+                    }
+                }
+            }
+            byte[] targetBytes = sb.toString().getBytes(StandardCharsets.UTF_8);
+            byte[] vibBytes = (isVibrateEnabled(context) ? "1" : "0").getBytes(StandardCharsets.UTF_8);
+
+            // 1. Write to internal storage (context.getFilesDir())
+            File internalDir = context.getFilesDir();
+            if (internalDir != null) {
+                if (!internalDir.exists()) internalDir.mkdirs();
+                File intTarget = new File(internalDir, "pin_targets.txt");
+                try (FileOutputStream fos = new FileOutputStream(intTarget)) {
+                    fos.write(targetBytes);
+                }
+                intTarget.setReadable(true, false);
+
+                File intVib = new File(internalDir, "vibrate.txt");
+                try (FileOutputStream fos = new FileOutputStream(intVib)) {
+                    fos.write(vibBytes);
+                }
+                intVib.setReadable(true, false);
+            }
+
+            // 2. Write to external storage
+            File extDir = context.getExternalFilesDir(null);
+            if (extDir != null) {
+                if (!extDir.exists()) extDir.mkdirs();
+                File extTarget = new File(extDir, "pin_targets.txt");
+                try (FileOutputStream fos = new FileOutputStream(extTarget)) {
+                    fos.write(targetBytes);
+                }
+                File extVib = new File(extDir, "vibrate.txt");
+                try (FileOutputStream fos = new FileOutputStream(extVib)) {
+                    fos.write(vibBytes);
                 }
             }
 
-            FileOutputStream fos = new FileOutputStream(targetFile);
-            fos.write(sb.toString().getBytes(StandardCharsets.UTF_8));
-            fos.flush();
-            fos.close();
-
-            File vibFile = new File(dir, "vibrate.txt");
-            FileOutputStream vfos = new FileOutputStream(vibFile);
-            vfos.write((isVibrateEnabled(context) ? "1" : "0").getBytes(StandardCharsets.UTF_8));
-            vfos.flush();
-            vfos.close();
+            // 3. If Shizuku is available, mirror directly to /data/local/tmp
+            if (ShizukuHelper.hasPermission()) {
+                String targetsStr = sb.toString();
+                String encoded = targetsStr.replace("'", "'\\''");
+                String vibStr = isVibrateEnabled(context) ? "1" : "0";
+                String mirrorCmd = "printf '%s' '" + encoded + "' > /data/local/tmp/pin_targets.txt 2>/dev/null; " +
+                                   "chmod 666 /data/local/tmp/pin_targets.txt 2>/dev/null; " +
+                                   "printf '%s' '" + vibStr + "' > /data/local/tmp/vibrate.txt 2>/dev/null; " +
+                                   "chmod 666 /data/local/tmp/vibrate.txt 2>/dev/null";
+                ShizukuHelper.executeCommand(mirrorCmd);
+            }
         } catch (Exception ignored) {}
     }
 

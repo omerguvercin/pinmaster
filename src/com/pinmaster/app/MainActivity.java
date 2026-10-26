@@ -65,7 +65,7 @@ public class MainActivity extends Activity {
         try {
             rikka.shizuku.Shizuku.addBinderReceivedListenerSticky(() -> {
                 if (ShizukuHelper.hasPermission()) {
-                    ShizukuHelper.ensureAgentRunning();
+                    ShizukuHelper.deployAndStartAgent(MainActivity.this);
                 } else {
                     ShizukuHelper.requestPermission(ShizukuHelper.REQUEST_CODE_SHIZUKU);
                 }
@@ -74,7 +74,7 @@ public class MainActivity extends Activity {
 
             rikka.shizuku.Shizuku.addRequestPermissionResultListener((requestCode, grantResult) -> {
                 if (requestCode == ShizukuHelper.REQUEST_CODE_SHIZUKU && grantResult == PackageManager.PERMISSION_GRANTED) {
-                    ShizukuHelper.ensureAgentRunning();
+                    ShizukuHelper.deployAndStartAgent(MainActivity.this);
                     runOnUiThread(this::updateStatus);
                 }
             });
@@ -86,6 +86,7 @@ public class MainActivity extends Activity {
         super.onResume();
         updateStatus();
         updateSelectedCountText();
+        SettingsManager.syncTargetsToFile(this);
         SettingsManager.applyLockTaskPackages(this);
     }
 

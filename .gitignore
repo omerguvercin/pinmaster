@@ -17,8 +17,8 @@ Thumbs.db
 # Scratch / debug files
 dump_*.xml
 btn_test.xml
-pm.xml
-pm_screen.xml
+pm*.xml
+shizuku*.xml
 new_pm.xml
 tapped.xml
 test_pin.sh

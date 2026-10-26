@@ -67,7 +67,70 @@ public class ShizukuHelper {
         return executeCommand("am task lock stop");
     }
 
+    public static void lockTopApp(final String expectedPkg) {
+        if (!hasPermission()) return;
+        new Thread(() -> {
+            try {
+                // Short stabilization delay to let the target window gain full focus
+                Thread.sleep(250);
+                String cmd = "LOCK_STATE=$(dumpsys activity 2>/dev/null | grep -m 1 'mLockTaskModeState=' | tr -d ' \r\n'); " +
+                             "if [ \"$LOCK_STATE\" != \"mLockTaskModeState=PINNED\" ] && [ \"$LOCK_STATE\" != \"mLockTaskModeState=LOCKED\" ]; then " +
+                             "  LINE=$(dumpsys window 2>/dev/null | grep mFocusedApp | grep ActivityRecord | head -n 1); " +
+                             "  PKG=$(echo \"$LINE\" | sed -E 's/.*u[0-9]+ ([^/]+)\\/.*/\\1/'); " +
+                             "  TID=$(echo \"$LINE\" | sed -E 's/.* t([0-9]+)\\}.*/\\1/'); " +
+                             "  if [ \"$PKG\" = \"" + expectedPkg + "\" ] && [ -n \"$TID\" ]; then " +
+                             "    am task lock \"$TID\" 2>&1; " +
+                             "    cmd vibrator_manager synced oneshot 80 2>/dev/null; " +
+                             "  fi; " +
+                             "fi";
+                executeCommand(cmd);
+            } catch (Exception ignored) {}
+        }).start();
+    }
+
     public static void ensureAgentRunning() {
-        executeCommand("nohup sh /data/local/tmp/pinmaster_agent.sh > /dev/null 2>&1 &");
+        executeCommand("nohup sh /data/local/tmp/pinmaster_agent.sh </dev/null >/dev/null 2>&1 &");
+    }
+
+    public static boolean deployAndStartAgent(Context context) {
+        if (!hasPermission()) {
+            Log.w(TAG, "Cannot deploy agent: Shizuku permission not granted");
+            return false;
+        }
+
+        try {
+            // 1. Extract agent script from assets to app private storage
+            java.io.File internalFile = new java.io.File(context.getFilesDir(), "pinmaster_agent.sh");
+            try (java.io.InputStream in = context.getAssets().open("pinmaster_agent.sh");
+                 java.io.FileOutputStream out = new java.io.FileOutputStream(internalFile)) {
+                byte[] buffer = new byte[4096];
+                int read;
+                while ((read = in.read(buffer)) != -1) {
+                    out.write(buffer, 0, read);
+                }
+                out.flush();
+            }
+
+            internalFile.setReadable(true, false);
+            internalFile.setExecutable(true, false);
+
+            // 2. Copy via Shizuku shell to /data/local/tmp and make executable
+            String cpCmd = "cp " + internalFile.getAbsolutePath() + " /data/local/tmp/pinmaster_agent.sh && chmod 755 /data/local/tmp/pinmaster_agent.sh";
+            executeCommand(cpCmd);
+
+            // Sync target packages to files for daemon
+            SettingsManager.syncTargetsToFile(context);
+
+            // 3. Launch agent daemon
+            String launchCmd = "pkill -f pinmaster_agent; nohup sh /data/local/tmp/pinmaster_agent.sh </dev/null >/dev/null 2>&1 &";
+            boolean success = executeCommand(launchCmd);
+            Log.i(TAG, "PinMaster agent successfully deployed and started via Shizuku!");
+            return success;
+        } catch (Throwable t) {
+            Log.e(TAG, "Failed to deploy and start agent", t);
+            // Fallback to starting existing script
+            ensureAgentRunning();
+            return false;
+        }
     }
 }

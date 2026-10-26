@@ -1,6 +1,7 @@
 package com.pinmaster.app;
 
 import android.accessibilityservice.AccessibilityService;
+import android.app.ActivityManager;
 import android.app.KeyguardManager;
 import android.content.Context;
 import android.content.Intent;
@@ -31,6 +32,10 @@ public class PinAccessibilityService extends AccessibilityService {
     // Kullanıcı şu anda korunan uygulamanın içinde mi?
     private static volatile boolean isInsideProtectedApp = false;
     private static volatile String activeGuardedPkg = null;
+    private static volatile String sessionLockedPkg = null;
+    private static volatile String unpinnedPkg = null;
+    private static volatile long unpinnedUntil = 0;
+    private static volatile boolean wasLockTaskActive = false;
     private static volatile long lastGuardedAppLaunchTime = 0;
     private static final long LAUNCH_GRACE_PERIOD_MS = 2500;
 
@@ -74,6 +79,9 @@ public class PinAccessibilityService extends AccessibilityService {
         if (!SettingsManager.isMasterEnabled(this)) {
             isInsideProtectedApp = false;
             activeGuardedPkg = null;
+            sessionLockedPkg = null;
+            unpinnedPkg = null;
+            unpinnedUntil = 0;
             hideOverlay();
             return;
         }
@@ -83,23 +91,57 @@ public class PinAccessibilityService extends AccessibilityService {
             return;
         }
 
+        // Android işletim sistemi sabitleme (LockTaskMode) durumunu kontrol et
+        ActivityManager am = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        int lockMode = am != null ? am.getLockTaskModeState() : ActivityManager.LOCK_TASK_MODE_NONE;
+        boolean isCurrentlyLocked = (lockMode == ActivityManager.LOCK_TASK_MODE_PINNED || lockMode == ActivityManager.LOCK_TASK_MODE_LOCKED);
+
+        // Kullanıcı donanım tuşlarına basarak sabitlemeyi kaldırdıysa:
+        if (wasLockTaskActive && !isCurrentlyLocked) {
+            if (activeGuardedPkg != null) {
+                unpinnedPkg = activeGuardedPkg;
+                unpinnedUntil = System.currentTimeMillis() + 10000; // 10 saniye dokunulmazlık süresi
+                // Kullanıcıyı hemen Ana Ekrana gönder ki hedef uygulamada kilitli kalmasın
+                performGlobalAction(GLOBAL_ACTION_HOME);
+            }
+        }
+        wasLockTaskActive = isCurrentlyLocked;
+
+        long now = System.currentTimeMillis();
+
         // ─── 1. DURUM: KORUNAN UYGULAMA AÇILDI ───
         if (SettingsManager.isPackagePinned(this, currentPkg)) {
+            // Kullanıcı bu uygulamayı az önce donanım tuşlarıyla unpin yaptıysa 10 saniye boyunca tekrar kilitleme
+            if (currentPkg.equals(unpinnedPkg) && now < unpinnedUntil) {
+                return;
+            }
+
+            // Bu uygulama bu oturumda zaten kilitlendiyse döngüye girmemek için tekrar kilitleme
+            if (currentPkg.equals(sessionLockedPkg)) {
+                return;
+            }
+
             isInsideProtectedApp = true;
             activeGuardedPkg = currentPkg;
+            sessionLockedPkg = currentPkg;
             hideOverlay();
 
-            // Shizuku aktifse arka plan kilit ajanını anında uyandır
+            // Shizuku aktifse doğrudan işletim sistemi seviyesinde sabitle (App Pinning)
             if (ShizukuHelper.hasPermission()) {
-                ShizukuHelper.ensureAgentRunning();
+                ShizukuHelper.lockTopApp(currentPkg);
             }
             return;
         }
 
-        // ─── 2. DURUM: UYGULAMA İÇİ YA DA GEÇİŞ DURUMLARI ───
-        // ADB Yerel Sabitleme (Screen Pinning / am task lock) devrede olduğu için
-        // sisteme fazladan kalkan çizdirilmez. Tüm uygulamalar (Instagram, Angela vb.)
-        // merkezi ve eşit şekilde doğrudan işletim sistemi tarafından sabitlenir.
+        // ─── 2. DURUM: KULLANICI KORUNAN UYGULAMADAN AYRILDI (ANA EKRAN YA DA DİĞER UYGULAMA) ───
+        if (sessionLockedPkg != null && !sessionLockedPkg.equals(currentPkg)) {
+            sessionLockedPkg = null;
+            if (now >= unpinnedUntil) {
+                unpinnedPkg = null;
+            }
+            isInsideProtectedApp = false;
+            activeGuardedPkg = null;
+        }
         hideOverlay();
     }
 
@@ -273,6 +315,9 @@ public class PinAccessibilityService extends AccessibilityService {
             // Başarılı PIN -> Korumadan çıkışa izin ver!
             if (SettingsManager.isVibrateEnabled(this)) {
                 vibrate(120);
+            }
+            if (ShizukuHelper.hasPermission()) {
+                ShizukuHelper.unlockTask();
             }
             isInsideProtectedApp = false;
             activeGuardedPkg = null;
