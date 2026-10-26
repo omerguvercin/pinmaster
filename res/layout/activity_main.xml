@@ -253,6 +253,52 @@
                         android:layout_height="wrap_content"/>
                 </LinearLayout>
 
+                <!-- Çıkış Molası (Cooldown) -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:background="@drawable/card_bg"
+                    android:padding="16dp"
+                    android:layout_marginTop="10dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Çıkış Molası (Dokunulmazlık)"
+                        android:textColor="@color/text_primary"
+                        android:textSize="15sp"
+                        android:textStyle="bold"/>
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:layout_marginBottom="12dp"
+                        android:text="Donanım tuşlarıyla kilit açıldığında uygulamanın tekrar kilitlenmesini engelleyen süre"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="12sp"/>
+
+                    <TextView
+                        android:id="@+id/tv_current_cooldown"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Süre: 10 Saniye"
+                        android:textColor="@color/accent_cyan"
+                        android:textSize="14sp"
+                        android:layout_marginBottom="12dp"/>
+
+                    <Button
+                        android:id="@+id/btn_change_cooldown"
+                        android:layout_width="wrap_content"
+                        android:layout_height="40dp"
+                        android:text="Süreyi Değiştir"
+                        android:background="@drawable/btn_secondary"
+                        android:textColor="@color/text_primary"
+                        android:textSize="13sp"
+                        android:stateListAnimator="@null"/>
+                </LinearLayout>
+
                 <!-- Çıkış PIN -->
                 <LinearLayout
                     android:layout_width="match_parent"

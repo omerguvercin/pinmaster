@@ -100,7 +100,8 @@ public class PinAccessibilityService extends AccessibilityService {
         if (wasLockTaskActive && !isCurrentlyLocked) {
             if (activeGuardedPkg != null) {
                 unpinnedPkg = activeGuardedPkg;
-                unpinnedUntil = System.currentTimeMillis() + 10000; // 10 saniye dokunulmazlık süresi
+                long cooldownMs = SettingsManager.getCooldownSeconds(this) * 1000L;
+                unpinnedUntil = System.currentTimeMillis() + cooldownMs;
                 // Kullanıcıyı hemen Ana Ekrana gönder ki hedef uygulamada kilitli kalmasın
                 performGlobalAction(GLOBAL_ACTION_HOME);
             }

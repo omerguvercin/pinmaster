@@ -47,6 +47,8 @@ public class MainActivity extends Activity {
     private Switch switchVibrate;
     private TextView tvCurrentPin;
     private Button btnChangePin;
+    private TextView tvCurrentCooldown;
+    private Button btnChangeCooldown;
     private Button btnAccessibility;
 
     @Override
@@ -120,6 +122,8 @@ public class MainActivity extends Activity {
         switchVibrate  = findViewById(R.id.switch_vibrate);
         tvCurrentPin   = findViewById(R.id.tv_current_pin);
         btnChangePin   = findViewById(R.id.btn_change_pin);
+        tvCurrentCooldown = findViewById(R.id.tv_current_cooldown);
+        btnChangeCooldown = findViewById(R.id.btn_change_cooldown);
         btnAccessibility = findViewById(R.id.btn_open_accessibility);
 
         if (btnAccessibility != null) {
@@ -194,6 +198,40 @@ public class MainActivity extends Activity {
 
         refreshPinDisplay();
         btnChangePin.setOnClickListener(v -> showChangePinDialog());
+
+        refreshCooldownDisplay();
+        if (btnChangeCooldown != null) {
+            btnChangeCooldown.setOnClickListener(v -> showChangeCooldownDialog());
+        }
+    }
+
+    private void refreshCooldownDisplay() {
+        if (tvCurrentCooldown == null) return;
+        int sec = SettingsManager.getCooldownSeconds(this);
+        tvCurrentCooldown.setText("Süre: " + sec + " Saniye");
+    }
+
+    private void showChangeCooldownDialog() {
+        final int[] seconds = {5, 10, 15, 30};
+        final String[] labels = {"5 Saniye", "10 Saniye (Önerilen)", "15 Saniye", "30 Saniye"};
+        int current = SettingsManager.getCooldownSeconds(this);
+        int selectedIndex = 1;
+        for (int i = 0; i < seconds.length; i++) {
+            if (seconds[i] == current) {
+                selectedIndex = i;
+                break;
+            }
+        }
+
+        new AlertDialog.Builder(this)
+                .setTitle("Çıkış Molası Süresi")
+                .setSingleChoiceItems(labels, selectedIndex, (dialog, which) -> {
+                    SettingsManager.setCooldownSeconds(MainActivity.this, seconds[which]);
+                    refreshCooldownDisplay();
+                    dialog.dismiss();
+                })
+                .setNegativeButton("İptal", null)
+                .show();
     }
 
     private void refreshPinDisplay() {

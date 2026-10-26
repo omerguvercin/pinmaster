@@ -99,18 +99,19 @@ public class AppAdapter extends BaseAdapter {
         }
         holder.toggle.setChecked(app.isPinned());
 
-        convertView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                boolean newState = !app.isPinned();
-                app.setPinned(newState);
-                SettingsManager.setPackagePinned(context, app.getPackageName(), newState);
-                notifyDataSetChanged();
-                if (pinChangeListener != null) {
-                    pinChangeListener.onPinChanged(app, newState);
-                }
+        View.OnClickListener toggleListener = v -> {
+            boolean newState = !app.isPinned();
+            app.setPinned(newState);
+            holder.toggle.setChecked(newState);
+            SettingsManager.setPackagePinned(context, app.getPackageName(), newState);
+            notifyDataSetChanged();
+            if (pinChangeListener != null) {
+                pinChangeListener.onPinChanged(app, newState);
             }
-        });
+        };
+
+        convertView.setOnClickListener(toggleListener);
+        holder.toggle.setOnClickListener(toggleListener);
 
         return convertView;
     }

@@ -73,6 +73,19 @@ public class SettingsManager {
         getPrefs(ctx).edit().putString(KEY_PIN, pin).apply();
     }
 
+    // ─── Unpin Cooldown ───────────────────────────────────────────────────────
+
+    private static final String KEY_COOLDOWN = "unpin_cooldown_sec";
+
+    public static int getCooldownSeconds(Context ctx) {
+        return getPrefs(ctx).getInt(KEY_COOLDOWN, 10);
+    }
+
+    public static void setCooldownSeconds(Context ctx, int seconds) {
+        getPrefs(ctx).edit().putInt(KEY_COOLDOWN, seconds).apply();
+        syncTargetsToFile(ctx);
+    }
+
     // ─── Sync Targets File for Daemon ─────────────────────────────────────────
 
     public static void syncTargetsToFile(Context context) {
@@ -106,6 +119,12 @@ public class SettingsManager {
                     fos.write(vibBytes);
                 }
                 intVib.setReadable(true, false);
+
+                File intCool = new File(internalDir, "cooldown.txt");
+                try (FileOutputStream fos = new FileOutputStream(intCool)) {
+                    fos.write(String.valueOf(getCooldownSeconds(context)).getBytes(StandardCharsets.UTF_8));
+                }
+                intCool.setReadable(true, false);
             }
 
             // 2. Write to external storage
@@ -120,6 +139,10 @@ public class SettingsManager {
                 try (FileOutputStream fos = new FileOutputStream(extVib)) {
                     fos.write(vibBytes);
                 }
+                File extCool = new File(extDir, "cooldown.txt");
+                try (FileOutputStream fos = new FileOutputStream(extCool)) {
+                    fos.write(String.valueOf(getCooldownSeconds(context)).getBytes(StandardCharsets.UTF_8));
+                }
             }
 
             // 3. If Shizuku is available, mirror directly to /data/local/tmp
@@ -127,10 +150,13 @@ public class SettingsManager {
                 String targetsStr = sb.toString();
                 String encoded = targetsStr.replace("'", "'\\''");
                 String vibStr = isVibrateEnabled(context) ? "1" : "0";
+                String coolStr = String.valueOf(getCooldownSeconds(context));
                 String mirrorCmd = "printf '%s' '" + encoded + "' > /data/local/tmp/pin_targets.txt 2>/dev/null; " +
                                    "chmod 666 /data/local/tmp/pin_targets.txt 2>/dev/null; " +
                                    "printf '%s' '" + vibStr + "' > /data/local/tmp/vibrate.txt 2>/dev/null; " +
-                                   "chmod 666 /data/local/tmp/vibrate.txt 2>/dev/null";
+                                   "chmod 666 /data/local/tmp/vibrate.txt 2>/dev/null; " +
+                                   "printf '%s' '" + coolStr + "' > /data/local/tmp/cooldown.txt 2>/dev/null; " +
+                                   "chmod 666 /data/local/tmp/cooldown.txt 2>/dev/null";
                 ShizukuHelper.executeCommand(mirrorCmd);
             }
         } catch (Exception ignored) {}
