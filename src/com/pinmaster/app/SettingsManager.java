@@ -58,6 +58,16 @@ public class SettingsManager {
         syncTargetsToFile(ctx);
     }
 
+    public static void selectAllPackages(Context ctx, java.util.Collection<String> packages) {
+        if (packages == null) return;
+        Set<String> set = new HashSet<>(packages);
+        // Exclude PinMaster itself
+        set.remove(ctx.getPackageName());
+        getPrefs(ctx).edit().putStringSet(KEY_PINNED, set).apply();
+        applyLockTaskPackages(ctx);
+        syncTargetsToFile(ctx);
+    }
+
     // ─── Vibrate ──────────────────────────────────────────────────────────────
 
     public static boolean isVibrateEnabled(Context ctx) {
@@ -153,11 +163,10 @@ public class SettingsManager {
 
             // 3. If Shizuku is available, mirror directly to /data/local/tmp
             if (ShizukuHelper.hasPermission()) {
-                String targetsStr = sb.toString();
-                String encoded = targetsStr.replace("'", "'\\''");
                 String vibStr = isVibrateEnabled(context) ? "1" : "0";
                 String coolStr = String.valueOf(getCooldownSeconds(context));
-                String mirrorCmd = "printf '%s' '" + encoded + "' > /data/local/tmp/pin_targets.txt 2>/dev/null; " +
+                String mirrorCmd = "cp /data/data/" + context.getPackageName() + "/files/pin_targets.txt /data/local/tmp/pin_targets.txt 2>/dev/null || " +
+                                   "cp /storage/emulated/0/Android/data/" + context.getPackageName() + "/files/pin_targets.txt /data/local/tmp/pin_targets.txt 2>/dev/null; " +
                                    "chmod 666 /data/local/tmp/pin_targets.txt 2>/dev/null; " +
                                    "printf '%s' '" + vibStr + "' > /data/local/tmp/vibrate.txt 2>/dev/null; " +
                                    "chmod 666 /data/local/tmp/vibrate.txt 2>/dev/null; " +

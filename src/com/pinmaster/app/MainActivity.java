@@ -33,6 +33,7 @@ public class MainActivity extends Activity {
     // Master switch
     private Switch switchMaster;
     private TextView tvSelectedSummary;
+    private Button btnSelectAll;
     private Button btnClearSelection;
 
     // Sekmeler
@@ -52,6 +53,7 @@ public class MainActivity extends Activity {
     private Button btnAccessibility;
     private Button btnBatteryOptimization;
     private Button btnSecuritySettings;
+    private TextView tvDeveloperGithub;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -102,7 +104,24 @@ public class MainActivity extends Activity {
         tvStatusDesc     = findViewById(R.id.tv_status_desc);
         tvAdbCommand     = findViewById(R.id.tv_adb_command);
         tvSelectedSummary = findViewById(R.id.tv_selected_summary);
+        btnSelectAll     = findViewById(R.id.btn_select_all);
         btnClearSelection = findViewById(R.id.btn_clear_selection);
+
+        if (btnSelectAll != null) {
+            btnSelectAll.setOnClickListener(v -> {
+                if (appList == null || appList.isEmpty()) return;
+                List<String> allPkgs = new ArrayList<>();
+                for (AppModel app : appList) {
+                    app.setPinned(true);
+                    allPkgs.add(app.getPackageName());
+                }
+                SettingsManager.selectAllPackages(MainActivity.this, allPkgs);
+                if (appAdapter != null) {
+                    appAdapter.notifyDataSetChanged();
+                }
+                updateSelectedCountText();
+            });
+        }
 
         if (btnClearSelection != null) {
             btnClearSelection.setOnClickListener(v -> {
@@ -179,6 +198,15 @@ public class MainActivity extends Activity {
                 } catch (Exception e) {
                     startActivity(new Intent(Settings.ACTION_SETTINGS));
                 }
+            });
+        }
+
+        tvDeveloperGithub = findViewById(R.id.tv_developer_github);
+        if (tvDeveloperGithub != null) {
+            tvDeveloperGithub.setOnClickListener(v -> {
+                try {
+                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/omerguvercin")));
+                } catch (Exception ignored) {}
             });
         }
     }
@@ -352,9 +380,15 @@ public class MainActivity extends Activity {
                 List<AppModel> list = new ArrayList<>();
                 Set<String> pinned = SettingsManager.getPinnedPackages(MainActivity.this);
 
+                Intent homeIntent = new Intent(Intent.ACTION_MAIN);
+                homeIntent.addCategory(Intent.CATEGORY_HOME);
+                android.content.pm.ResolveInfo homeResolve = pm.resolveActivity(homeIntent, PackageManager.MATCH_DEFAULT_ONLY);
+                String homePackage = (homeResolve != null && homeResolve.activityInfo != null) ? homeResolve.activityInfo.packageName : null;
+
                 for (PackageInfo pi : pkgs) {
                     if (pm.getLaunchIntentForPackage(pi.packageName) == null) continue;
                     if (pi.packageName.equals(getPackageName())) continue;
+                    if (homePackage != null && pi.packageName.equals(homePackage)) continue;
                     String label = pm.getApplicationLabel(pi.applicationInfo).toString();
                     list.add(new AppModel(label, pi.packageName,
                             pm.getApplicationIcon(pi.applicationInfo),
