@@ -5,6 +5,7 @@ import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.Settings;
@@ -32,6 +33,7 @@ public class MainActivity extends Activity {
     // Master switch
     private Switch switchMaster;
     private TextView tvSelectedSummary;
+    private Button btnClearSelection;
 
     // Sekmeler
     private Button tabBtnApps, tabBtnSettings, tabBtnGuide;
@@ -45,11 +47,11 @@ public class MainActivity extends Activity {
 
     // Ayarlar sekmesi
     private Switch switchVibrate;
-    private TextView tvCurrentPin;
-    private Button btnChangePin;
     private TextView tvCurrentCooldown;
     private Button btnChangeCooldown;
     private Button btnAccessibility;
+    private Button btnBatteryOptimization;
+    private Button btnSecuritySettings;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -100,6 +102,29 @@ public class MainActivity extends Activity {
         tvStatusDesc     = findViewById(R.id.tv_status_desc);
         tvAdbCommand     = findViewById(R.id.tv_adb_command);
         tvSelectedSummary = findViewById(R.id.tv_selected_summary);
+        btnClearSelection = findViewById(R.id.btn_clear_selection);
+
+        if (btnClearSelection != null) {
+            btnClearSelection.setOnClickListener(v -> {
+                new AlertDialog.Builder(this)
+                        .setTitle("Seçimleri Temizle")
+                        .setMessage("Tüm kilitli uygulama seçimlerini kaldırmak istediğinize emin misiniz?")
+                        .setPositiveButton("Temizle", (dialog, which) -> {
+                            SettingsManager.clearAllPinnedPackages(MainActivity.this);
+                            if (appList != null) {
+                                for (AppModel app : appList) {
+                                    app.setPinned(false);
+                                }
+                            }
+                            if (appAdapter != null) {
+                                appAdapter.notifyDataSetChanged();
+                            }
+                            updateSelectedCountText();
+                        })
+                        .setNegativeButton("İptal", null)
+                        .show();
+            });
+        }
 
         switchMaster = findViewById(R.id.switch_master);
         switchMaster.setChecked(SettingsManager.isMasterEnabled(this));
@@ -119,16 +144,42 @@ public class MainActivity extends Activity {
         etSearch  = findViewById(R.id.et_search);
         listApps  = findViewById(R.id.list_apps);
 
-        switchVibrate  = findViewById(R.id.switch_vibrate);
-        tvCurrentPin   = findViewById(R.id.tv_current_pin);
-        btnChangePin   = findViewById(R.id.btn_change_pin);
-        tvCurrentCooldown = findViewById(R.id.tv_current_cooldown);
-        btnChangeCooldown = findViewById(R.id.btn_change_cooldown);
-        btnAccessibility = findViewById(R.id.btn_open_accessibility);
+        switchVibrate          = findViewById(R.id.switch_vibrate);
+        tvCurrentCooldown      = findViewById(R.id.tv_current_cooldown);
+        btnChangeCooldown      = findViewById(R.id.btn_change_cooldown);
+        btnAccessibility       = findViewById(R.id.btn_open_accessibility);
+        btnBatteryOptimization = findViewById(R.id.btn_battery_optimization);
+        btnSecuritySettings    = findViewById(R.id.btn_open_security_settings);
 
         if (btnAccessibility != null) {
             btnAccessibility.setOnClickListener(v ->
                     startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)));
+        }
+
+        if (btnBatteryOptimization != null) {
+            btnBatteryOptimization.setOnClickListener(v -> {
+                try {
+                    Intent intent = new Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS);
+                    startActivity(intent);
+                } catch (Exception e) {
+                    try {
+                        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                        intent.setData(Uri.parse("package:" + getPackageName()));
+                        startActivity(intent);
+                    } catch (Exception ignored) {}
+                }
+            });
+        }
+
+        if (btnSecuritySettings != null) {
+            btnSecuritySettings.setOnClickListener(v -> {
+                try {
+                    Intent intent = new Intent(Settings.ACTION_SECURITY_SETTINGS);
+                    startActivity(intent);
+                } catch (Exception e) {
+                    startActivity(new Intent(Settings.ACTION_SETTINGS));
+                }
+            });
         }
     }
 
@@ -148,6 +199,19 @@ public class MainActivity extends Activity {
             tvStatusDesc.setText("'Erişilebilirliği Aç' butonuna basıp PinMaster'ı etkinleştirin.");
             cardStatus.setBackgroundResource(R.drawable.badge_inactive);
             tvAdbCommand.setVisibility(View.GONE);
+        } else if (!ShizukuHelper.isShizukuInstalled(this)) {
+            tvStatusTitle.setText("📦  Shizuku Yüklü Değil");
+            tvStatusDesc.setText("PinMaster'ın rootsuz yerel kilit atabilmesi için Shizuku gereklidir. Yüklemek için dokunun.");
+            cardStatus.setBackgroundResource(R.drawable.badge_inactive);
+            tvAdbCommand.setVisibility(View.VISIBLE);
+            tvAdbCommand.setText("👉 Shizuku'yu Yükle (Google Play)");
+            tvAdbCommand.setOnClickListener(v -> {
+                try {
+                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=moe.shizuku.privileged.api")));
+                } catch (Exception e) {
+                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=moe.shizuku.privileged.api")));
+                }
+            });
         } else if (!ShizukuHelper.isShizukuAvailable()) {
             tvStatusTitle.setText("⚡  Shizuku Servisi Başlatılmadı");
             tvStatusDesc.setText("Yerel sabitleme için Shizuku uygulamasını açıp 'Başlat'a dokunun ya da bilgisayardan başlatın.");
@@ -192,12 +256,11 @@ public class MainActivity extends Activity {
     // ─── Settings ─────────────────────────────────────────────────────────────
 
     private void setupSettings() {
-        switchVibrate.setChecked(SettingsManager.isVibrateEnabled(this));
-        switchVibrate.setOnCheckedChangeListener((btn, checked) ->
-                SettingsManager.setVibrateEnabled(MainActivity.this, checked));
-
-        refreshPinDisplay();
-        btnChangePin.setOnClickListener(v -> showChangePinDialog());
+        if (switchVibrate != null) {
+            switchVibrate.setChecked(SettingsManager.isVibrateEnabled(this));
+            switchVibrate.setOnCheckedChangeListener((btn, checked) ->
+                    SettingsManager.setVibrateEnabled(MainActivity.this, checked));
+        }
 
         refreshCooldownDisplay();
         if (btnChangeCooldown != null) {
@@ -232,39 +295,6 @@ public class MainActivity extends Activity {
                 })
                 .setNegativeButton("İptal", null)
                 .show();
-    }
-
-    private void refreshPinDisplay() {
-        String pin = SettingsManager.getExitPin(this);
-        StringBuilder stars = new StringBuilder();
-        for (int i = 0; i < pin.length(); i++) stars.append('•');
-        tvCurrentPin.setText("Mevcut PIN: " + stars);
-    }
-
-    private void showChangePinDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("PIN Değiştir");
-        builder.setMessage("Kilitli moddan çıkmak için kullanılacak PIN (en az 4 hane).");
-
-        final EditText input = new EditText(this);
-        input.setInputType(InputType.TYPE_CLASS_NUMBER);
-        input.setHint("Yeni PIN");
-        input.setPadding(64, 32, 64, 32);
-        builder.setView(input);
-
-        builder.setPositiveButton("Kaydet", (d, w) -> {
-            String pin = input.getText().toString().trim();
-            if (pin.length() >= 4) {
-                SettingsManager.setExitPin(MainActivity.this, pin);
-                refreshPinDisplay();
-            } else {
-                new AlertDialog.Builder(MainActivity.this)
-                        .setMessage("PIN en az 4 haneli olmalıdır.")
-                        .setPositiveButton("Tamam", null).show();
-            }
-        });
-        builder.setNegativeButton("İptal", null);
-        builder.show();
     }
 
     // ─── Tabs ─────────────────────────────────────────────────────────────────

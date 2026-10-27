@@ -106,17 +106,37 @@
             android:visibility="gone"/>
     </LinearLayout>
 
-    <!-- Seçili uygulama sayısı -->
-    <TextView
-        android:id="@+id/tv_selected_summary"
+    <!-- Seçili uygulama sayısı ve Seçimleri Temizle Butonu -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:orientation="horizontal"
         android:paddingLeft="20dp"
         android:paddingRight="20dp"
         android:paddingBottom="6dp"
-        android:text="0 Uygulama Seçili"
-        android:textSize="12sp"
-        android:textColor="@color/text_muted"/>
+        android:gravity="center_vertical">
+
+        <TextView
+            android:id="@+id/tv_selected_summary"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="0 Uygulama Seçili"
+            android:textSize="12sp"
+            android:textColor="@color/text_muted"/>
+
+        <Button
+            android:id="@+id/btn_clear_selection"
+            android:layout_width="wrap_content"
+            android:layout_height="28dp"
+            android:text="Seçimleri Temizle"
+            android:textSize="11sp"
+            android:textColor="@color/accent_cyan"
+            android:background="@android:color/transparent"
+            android:paddingLeft="8dp"
+            android:paddingRight="8dp"
+            android:stateListAnimator="@null"/>
+    </LinearLayout>
 
     <!-- ══════════════════════════════════════════════
          SEKME BUTONLARI
@@ -299,7 +319,7 @@
                         android:stateListAnimator="@null"/>
                 </LinearLayout>
 
-                <!-- Çıkış PIN -->
+                <!-- Kilit Nasıl Açılır Bilgi Kartı -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -311,7 +331,34 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Çıkış PIN'i"
+                        android:text="Kilit Nasıl Kaldırılır?"
+                        android:textColor="@color/accent_cyan"
+                        android:textSize="15sp"
+                        android:textStyle="bold"/>
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:text="Uygulamadan çıkmak için telefonunuzun Geri ve Son Uygulamalar tuşlarına aynı anda basılı tutun (veya yukarı kaydırıp bekleyin).\n\nKilit kalktığında telefon otomatik olarak Ana Ekrana döner ve belirlediğiniz çıkış molası boyunca uygulama tekrar kilitlenmez."
+                        android:textColor="@color/text_secondary"
+                        android:textSize="12sp"
+                        android:lineSpacingExtra="3dp"/>
+                </LinearLayout>
+
+                <!-- Pil Optimizasyonu -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:background="@drawable/card_bg"
+                    android:padding="16dp"
+                    android:layout_marginTop="10dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Pil Optimizasyonu"
                         android:textColor="@color/text_primary"
                         android:textSize="15sp"
                         android:textStyle="bold"/>
@@ -321,24 +368,52 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
                         android:layout_marginBottom="12dp"
-                        android:text="PinMaster logosuna 5 kez dok → bu PIN → kilit kalkar"
+                        android:text="Android'in arka plandaki koruma servisini uyutmaması için pil kısıtlamasını kaldırın."
                         android:textColor="@color/text_secondary"
                         android:textSize="12sp"/>
 
-                    <TextView
-                        android:id="@+id/tv_current_pin"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Mevcut PIN: ••••"
-                        android:textColor="@color/accent_cyan"
-                        android:textSize="14sp"
-                        android:layout_marginBottom="12dp"/>
-
                     <Button
-                        android:id="@+id/btn_change_pin"
+                        android:id="@+id/btn_battery_optimization"
                         android:layout_width="wrap_content"
                         android:layout_height="40dp"
-                        android:text="PIN Değiştir"
+                        android:text="Pil Optimizasyonu"
+                        android:background="@drawable/btn_secondary"
+                        android:textColor="@color/text_primary"
+                        android:textSize="13sp"
+                        android:stateListAnimator="@null"/>
+                </LinearLayout>
+
+                <!-- Sistem Sabitleme Ayarı -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:background="@drawable/card_bg"
+                    android:padding="16dp"
+                    android:layout_marginTop="10dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Sistem Sabitleme Ayarı"
+                        android:textColor="@color/text_primary"
+                        android:textSize="15sp"
+                        android:textStyle="bold"/>
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:layout_marginBottom="12dp"
+                        android:text="Telefonun Güvenlik menüsünden 'Ekrana Sabitleme' özelliğinin açık olduğundan emin olun."
+                        android:textColor="@color/text_secondary"
+                        android:textSize="12sp"/>
+
+                    <Button
+                        android:id="@+id/btn_open_security_settings"
+                        android:layout_width="wrap_content"
+                        android:layout_height="40dp"
+                        android:text="Güvenlik Ayarlarını Aç"
                         android:background="@drawable/btn_secondary"
                         android:textColor="@color/text_primary"
                         android:textSize="13sp"
@@ -433,11 +508,11 @@
                     android:orientation="vertical" android:background="@drawable/card_bg"
                     android:padding="16dp" android:layout_marginBottom="10dp">
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:text="3 — Sessiz Mod (Opsiyonel, Önerilen)"
+                        android:text="3 — Shizuku'yu Başlatın"
                         android:textColor="@color/accent_cyan" android:textSize="14sp" android:textStyle="bold"/>
                     <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:text="Telefonu USB'ye takın ve şu komutu çalıştırın:\n\nadb shell dpm set-device-owner com.pinmaster.app/.PinDeviceAdminReceiver\n\nBu işlem yalnızca bir kez yapılır. Sonrasında kilitleme tamamen sessiz olur."
+                        android:text="Shizuku uygulamasını yükleyin ve Kablosuz Hata Ayıklama (Wireless Debugging) veya bilgisayardan bir kere başlatın. Ardından PinMaster'a izin verin."
                         android:textColor="@color/text_secondary" android:textSize="13sp"/>
                 </LinearLayout>
 
@@ -445,11 +520,11 @@
                     android:orientation="vertical" android:background="@drawable/card_bg"
                     android:padding="16dp">
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:text="4 — Kilitden Çıkış"
+                        android:text="4 — Kilit Nasıl Kaldırılır?"
                         android:textColor="@color/accent_cyan" android:textSize="14sp" android:textStyle="bold"/>
                     <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:text="Kilitli uygulamadan çıkmaya çalışınca guard ekranı gelir. PinMaster logosuna 5 kez dokun → PIN girin → kilit kalkar."
+                        android:text="Kilitli uygulamadan çıkmak için telefonunuzun Geri ve Son Uygulamalar (Kare/Üçgen) tuşlarına aynı anda basılı tutun (jestlerde alttan kaydırıp tutun).\n\nKilit kalktığında telefon otomatik ana ekrana döner ve belirlenen mola süresince uygulama tekrar kilitlenmez."
                         android:textColor="@color/text_secondary" android:textSize="13sp"/>
                 </LinearLayout>
 

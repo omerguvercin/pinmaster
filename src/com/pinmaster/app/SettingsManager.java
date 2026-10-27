@@ -52,6 +52,12 @@ public class SettingsManager {
         syncTargetsToFile(ctx);
     }
 
+    public static void clearAllPinnedPackages(Context ctx) {
+        getPrefs(ctx).edit().remove(KEY_PINNED).apply();
+        applyLockTaskPackages(ctx);
+        syncTargetsToFile(ctx);
+    }
+
     // ─── Vibrate ──────────────────────────────────────────────────────────────
 
     public static boolean isVibrateEnabled(Context ctx) {

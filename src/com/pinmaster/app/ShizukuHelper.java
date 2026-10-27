@@ -12,6 +12,16 @@ public class ShizukuHelper {
     private static final String TAG = "ShizukuHelper";
     public static final int REQUEST_CODE_SHIZUKU = 1001;
 
+    public static boolean isShizukuInstalled(Context context) {
+        try {
+            if (context == null) return false;
+            context.getPackageManager().getPackageInfo("moe.shizuku.privileged.api", 0);
+            return true;
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
     public static boolean isShizukuAvailable() {
         try {
             return Shizuku.pingBinder();
