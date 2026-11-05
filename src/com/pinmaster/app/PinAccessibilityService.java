@@ -146,6 +146,10 @@ public class PinAccessibilityService extends AccessibilityService {
             cancelActiveTimer();
             ShizukuHelper.setPrivacyShield(false);
             if (activeGuardedPkg != null) {
+                // İzinsiz çıkış denemesi: Casus fotoğrafı çek
+                if (SettingsManager.isSpyCameraEnabled(this)) {
+                    IntruderManager.captureSilentPhoto(this, activeGuardedPkg, "Kilit Çözme Girişimi");
+                }
                 unpinnedPkg = activeGuardedPkg;
                 long cooldownMs = SettingsManager.getCooldownSeconds(this) * 1000L;
                 unpinnedUntil = System.currentTimeMillis() + cooldownMs;

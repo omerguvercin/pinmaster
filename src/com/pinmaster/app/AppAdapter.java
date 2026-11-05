@@ -176,7 +176,7 @@ public class AppAdapter extends BaseAdapter {
     private void showModeDialog(AppModel app) {
         final String[] options = {
                 "Kilitli (Süresiz)",
-                "Kilitli: 1 dakika (Test)",
+                "Kilitli: 1 dakika",
                 "Kilitli: 5 dakika",
                 "Kilitli: 10 dakika",
                 "Kilitli: 15 dakika",
