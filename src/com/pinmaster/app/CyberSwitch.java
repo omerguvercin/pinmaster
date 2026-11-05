@@ -161,3 +161,4 @@ public class CyberSwitch extends View {
         return value * getResources().getDisplayMetrics().density;
     }
 }
+

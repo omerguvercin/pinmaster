@@ -6,14 +6,14 @@
     android:background="@color/bg_dark">
 
     <!-- ══════════════════════════════════════════════
-         HEADER
+         MOCKUP HEADER (Konsept 1: Cyber-Shield)
     ══════════════════════════════════════════════ -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:paddingLeft="20dp"
-        android:paddingRight="20dp"
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp"
         android:paddingTop="44dp"
         android:paddingBottom="12dp"
         android:gravity="center_vertical">
@@ -28,227 +28,121 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="PinMaster"
-                android:textSize="26sp"
+                android:textSize="20sp"
                 android:textStyle="bold"
                 android:textColor="@color/accent_cyan"
-                android:fontFamily="sans-serif-medium"/>
+                android:letterSpacing="0.02" />
 
+            <!-- Dinamik Kalkan Durumu (Kalkan Aktif / İzin Gerekli) -->
             <TextView
+                android:id="@+id/tv_status_desc"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Otomatik Uygulama Kilitleme"
-                android:textSize="12sp"
-                android:textColor="@color/text_muted"/>
+                android:text="Kalkan Aktif"
+                android:textSize="11sp"
+                android:textColor="@color/text_secondary"
+                android:layout_marginTop="2dp" />
         </LinearLayout>
 
-        <!-- Master switch — sağ üstte -->
+        <!-- Mockup Sağ Switch -->
         <com.pinmaster.app.CyberSwitch
             android:id="@+id/switch_master"
-            android:layout_width="44dp"
-            android:layout_height="26dp" />
+            android:layout_width="42dp"
+            android:layout_height="24dp" />
     </LinearLayout>
 
-    <!-- ══════════════════════════════════════════════
-         DURUM KARTI
-    ══════════════════════════════════════════════ -->
-    <LinearLayout
-        android:id="@+id/card_status"
+    <!-- İnce Siber Ayırıcı Çizgi -->
+    <View
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:background="@drawable/card_bg"
+        android:layout_height="1dp"
+        android:background="@color/divider"
         android:layout_marginLeft="16dp"
-        android:layout_marginRight="16dp"
-        android:layout_marginBottom="8dp"
-        android:padding="16dp">
-
-        <TextView
-            android:id="@+id/tv_status_title"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Kontrol ediliyor..."
-            android:textSize="15sp"
-            android:textStyle="bold"
-            android:textColor="@color/text_primary"/>
-
-        <TextView
-            android:id="@+id/tv_status_desc"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:textSize="12sp"
-            android:textColor="@color/text_secondary"/>
-
-        <!-- ADB komutu — yalnızca DeviceOwner kurulu değilse -->
-        <TextView
-            android:id="@+id/tv_adb_command"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:padding="12dp"
-            android:background="#1500D4AA"
-            android:textColor="@color/accent_cyan"
-            android:textSize="11sp"
-            android:fontFamily="monospace"
-            android:visibility="gone"/>
-
-        <!-- Erişilebilirlik butonu — yalnızca gerektiğinde -->
-        <Button
-            android:id="@+id/btn_open_accessibility"
-            android:layout_width="wrap_content"
-            android:layout_height="36dp"
-            android:layout_marginTop="10dp"
-            android:text="Erişilebilirliği Aç"
-            android:textSize="12sp"
-            android:textColor="@color/text_primary"
-            android:background="@drawable/btn_secondary"
-            android:stateListAnimator="@null"
-            android:visibility="gone"/>
-    </LinearLayout>
-
-    <!-- Seçili uygulama sayısı ve Seçimleri Temizle Butonu -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:paddingLeft="16dp"
-        android:paddingRight="16dp"
-        android:paddingBottom="10dp"
-        android:gravity="center_vertical">
-
-        <TextView
-            android:id="@+id/tv_selected_summary"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="0 Uygulama Seçili"
-            android:textSize="12sp"
-            android:textColor="@color/text_muted"/>
-
-        <Button
-            android:id="@+id/btn_select_all"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:minHeight="32dp"
-            android:text="Tümünü Seç"
-            android:textSize="11sp"
-            android:textColor="@color/accent_cyan"
-            android:background="@drawable/btn_secondary"
-            android:paddingLeft="12dp"
-            android:paddingRight="12dp"
-            android:paddingTop="6dp"
-            android:paddingBottom="6dp"
-            android:layout_marginRight="6dp"
-            android:stateListAnimator="@null"/>
-
-        <Button
-            android:id="@+id/btn_clear_selection"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:minHeight="32dp"
-            android:text="Seçimleri Temizle"
-            android:textSize="11sp"
-            android:textColor="@color/accent_red"
-            android:background="@drawable/btn_secondary_danger"
-            android:paddingLeft="12dp"
-            android:paddingRight="12dp"
-            android:paddingTop="6dp"
-            android:paddingBottom="6dp"
-            android:stateListAnimator="@null"/>
-    </LinearLayout>
+        android:layout_marginRight="16dp" />
 
     <!-- ══════════════════════════════════════════════
-         SEKME BUTONLARI (Segmented Control)
-    ══════════════════════════════════════════════ -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginLeft="16dp"
-        android:layout_marginRight="16dp"
-        android:layout_marginBottom="10dp"
-        android:background="@drawable/tab_bar_bg"
-        android:weightSum="3">
-
-        <Button
-            android:id="@+id/tab_btn_apps"
-            android:layout_width="0dp"
-            android:layout_height="34dp"
-            android:layout_weight="1"
-            android:text="Uygulamalar"
-            android:textSize="12sp"
-            android:textStyle="bold"
-            android:background="@drawable/tab_selected_bg"
-            android:textColor="@color/accent_cyan"
-            android:stateListAnimator="@null"/>
-
-        <Button
-            android:id="@+id/tab_btn_settings"
-            android:layout_width="0dp"
-            android:layout_height="34dp"
-            android:layout_weight="1"
-            android:text="Ayarlar"
-            android:textSize="12sp"
-            android:background="@android:color/transparent"
-            android:textColor="@color/text_secondary"
-            android:stateListAnimator="@null"/>
-
-        <Button
-            android:id="@+id/tab_btn_guide"
-            android:layout_width="0dp"
-            android:layout_height="34dp"
-            android:layout_weight="1"
-            android:text="Kılavuz"
-            android:textSize="12sp"
-            android:background="@android:color/transparent"
-            android:textColor="@color/text_secondary"
-            android:stateListAnimator="@null"/>
-    </LinearLayout>
-
-    <!-- ══════════════════════════════════════════════
-         SEKME İÇERİKLERİ
+         ANA İÇERİK ALANI
     ══════════════════════════════════════════════ -->
     <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="0dp"
+        android:layout_weight="1">
 
-        <!-- ── Uygulamalar ── -->
+        <!-- ── 1. UYGULAMALAR SEKME İÇERİĞİ ── -->
         <LinearLayout
             android:id="@+id/view_tab_apps"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical">
 
-            <EditText
-                android:id="@+id/et_search"
+            <!-- Minimal Arama & Aksiyon Barı -->
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="16dp"
-                android:layout_marginRight="16dp"
-                android:layout_marginBottom="10dp"
-                android:hint="@string/search_hint"
-                android:background="@drawable/search_bg"
-                android:textColor="@color/text_primary"
-                android:textColorHint="@color/text_muted"
-                android:textSize="13.5sp"
-                android:inputType="text"/>
+                android:orientation="horizontal"
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp"
+                android:paddingTop="8dp"
+                android:paddingBottom="6dp"
+                android:gravity="center_vertical">
 
+                <EditText
+                    android:id="@+id/et_search"
+                    android:layout_width="0dp"
+                    android:layout_height="32dp"
+                    android:layout_weight="1"
+                    android:hint="@string/search_hint"
+                    android:background="@drawable/search_bg"
+                    android:textColor="@color/text_primary"
+                    android:textColorHint="@color/text_muted"
+                    android:textSize="12sp"
+                    android:paddingLeft="10dp"
+                    android:paddingRight="10dp"
+                    android:inputType="text" />
+
+                <TextView
+                    android:id="@+id/btn_select_all"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Tümü"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/accent_cyan"
+                    android:paddingLeft="10dp"
+                    android:paddingRight="8dp"
+                    android:paddingTop="6dp"
+                    android:paddingBottom="6dp" />
+
+                <TextView
+                    android:id="@+id/btn_clear_selection"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Temizle"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/accent_red"
+                    android:paddingLeft="8dp"
+                    android:paddingRight="4dp"
+                    android:paddingTop="6dp"
+                    android:paddingBottom="6dp" />
+            </LinearLayout>
+
+            <!-- Kart Listesi (Doğrudan Prototip Düzeni) -->
             <ListView
                 android:id="@+id/list_apps"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:paddingLeft="16dp"
                 android:paddingRight="16dp"
-                android:paddingTop="2dp"
-                android:paddingBottom="24dp"
+                android:paddingTop="4dp"
+                android:paddingBottom="12dp"
                 android:clipToPadding="false"
                 android:divider="@android:color/transparent"
-                android:dividerHeight="8dp"
+                android:dividerHeight="6dp"
                 android:listSelector="@android:color/transparent"
-                android:scrollbars="none"/>
+                android:scrollbars="none" />
         </LinearLayout>
 
-        <!-- ── Ayarlar ── -->
+        <!-- ── 2. AYARLAR SEKME İÇERİĞİ ── -->
         <ScrollView
             android:id="@+id/view_tab_settings"
             android:layout_width="match_parent"
@@ -267,7 +161,7 @@
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:background="@drawable/card_bg"
-                    android:padding="16dp"
+                    android:padding="14dp"
                     android:gravity="center_vertical">
 
                     <LinearLayout
@@ -281,21 +175,21 @@
                             android:layout_height="wrap_content"
                             android:text="Titreşim"
                             android:textColor="@color/text_primary"
-                            android:textSize="15sp"
-                            android:textStyle="bold"/>
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Kilitleme anında titreşim"
                             android:textColor="@color/text_secondary"
-                            android:textSize="12sp"/>
+                            android:textSize="11sp" />
                     </LinearLayout>
 
                     <com.pinmaster.app.CyberSwitch
                         android:id="@+id/switch_vibrate"
-                        android:layout_width="44dp"
-                        android:layout_height="26dp" />
+                        android:layout_width="40dp"
+                        android:layout_height="22dp" />
                 </LinearLayout>
 
                 <!-- Mahremiyet Kalkanı -->
@@ -304,8 +198,8 @@
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:background="@drawable/card_bg"
-                    android:padding="16dp"
-                    android:layout_marginTop="10dp"
+                    android:padding="14dp"
+                    android:layout_marginTop="8dp"
                     android:gravity="center_vertical">
 
                     <LinearLayout
@@ -319,49 +213,48 @@
                             android:layout_height="wrap_content"
                             android:text="Mahremiyet Kalkanı"
                             android:textColor="@color/text_primary"
-                            android:textSize="15sp"
-                            android:textStyle="bold"/>
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Kilitliyken bildirimleri ve durum çubuğunu gizle"
                             android:textColor="@color/text_secondary"
-                            android:textSize="12sp"/>
+                            android:textSize="11sp" />
                     </LinearLayout>
 
                     <com.pinmaster.app.CyberSwitch
                         android:id="@+id/switch_privacy_shield"
-                        android:layout_width="44dp"
-                        android:layout_height="26dp" />
+                        android:layout_width="40dp"
+                        android:layout_height="22dp" />
                 </LinearLayout>
 
-
-
+                <!-- Çıkış Molası -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:background="@drawable/card_bg"
-                    android:padding="16dp"
-                    android:layout_marginTop="10dp">
+                    android:padding="14dp"
+                    android:layout_marginTop="8dp">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Çıkış Molası (Dokunulmazlık)"
                         android:textColor="@color/text_primary"
-                        android:textSize="15sp"
-                        android:textStyle="bold"/>
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
 
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:layout_marginBottom="12dp"
+                        android:layout_marginTop="3dp"
+                        android:layout_marginBottom="8dp"
                         android:text="Donanım tuşlarıyla kilit açıldığında uygulamanın tekrar kilitlenmesini engelleyen süre"
                         android:textColor="@color/text_secondary"
-                        android:textSize="12sp"/>
+                        android:textSize="11sp" />
 
                     <TextView
                         android:id="@+id/tv_current_cooldown"
@@ -369,51 +262,21 @@
                         android:layout_height="wrap_content"
                         android:text="Süre: 10 Saniye"
                         android:textColor="@color/accent_cyan"
-                        android:textSize="14sp"
-                        android:layout_marginBottom="12dp"/>
+                        android:textSize="13sp"
+                        android:layout_marginBottom="8dp" />
 
                     <Button
                         android:id="@+id/btn_change_cooldown"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:minHeight="40dp"
+                        android:layout_height="32dp"
                         android:text="Süreyi Değiştir"
                         android:background="@drawable/btn_secondary"
                         android:textColor="@color/text_primary"
-                        android:textSize="13sp"
-                        android:paddingLeft="20dp"
-                        android:paddingRight="20dp"
-                        android:paddingTop="10dp"
-                        android:paddingBottom="10dp"
+                        android:textSize="11.5sp"
+                        android:paddingLeft="14dp"
+                        android:paddingRight="14dp"
                         android:gravity="center"
-                        android:stateListAnimator="@null"/>
-                </LinearLayout>
-
-                <!-- Kilit Nasıl Açılır Bilgi Kartı -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:background="@drawable/card_bg"
-                    android:padding="16dp"
-                    android:layout_marginTop="10dp">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Kilit Nasıl Kaldırılır?"
-                        android:textColor="@color/accent_cyan"
-                        android:textSize="15sp"
-                        android:textStyle="bold"/>
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:text="Uygulamadan çıkmak için telefonunuzun Geri ve Son Uygulamalar tuşlarına aynı anda basılı tutun (veya yukarı kaydırıp bekleyin).\n\nKilit kalktığında uygulama serbest kalır; uygulamayı kapatabilir veya ana ekrana dönebilirsiniz."
-                        android:textColor="@color/text_secondary"
-                        android:textSize="12sp"
-                        android:lineSpacingExtra="3dp"/>
+                        android:stateListAnimator="@null" />
                 </LinearLayout>
 
                 <!-- Pil Optimizasyonu -->
@@ -422,84 +285,78 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:background="@drawable/card_bg"
-                    android:padding="16dp"
-                    android:layout_marginTop="10dp">
+                    android:padding="14dp"
+                    android:layout_marginTop="8dp">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Pil Optimizasyonu"
                         android:textColor="@color/text_primary"
-                        android:textSize="15sp"
-                        android:textStyle="bold"/>
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
 
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:layout_marginBottom="12dp"
-                        android:text="Android'in arka plandaki koruma servisini uyutmaması için pil kısıtlamasını kaldırın."
+                        android:layout_marginTop="3dp"
+                        android:layout_marginBottom="8dp"
+                        android:text="Android'in koruma servisini uyutmaması için pil kısıtlamasını kaldırın."
                         android:textColor="@color/text_secondary"
-                        android:textSize="12sp"/>
+                        android:textSize="11sp" />
 
                     <Button
                         android:id="@+id/btn_battery_optimization"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:minHeight="40dp"
-                        android:text="Pil Optimizasyonu"
+                        android:layout_height="32dp"
+                        android:text="Pil Ayarlarını Aç"
                         android:background="@drawable/btn_secondary"
                         android:textColor="@color/text_primary"
-                        android:textSize="13sp"
-                        android:paddingLeft="20dp"
-                        android:paddingRight="20dp"
-                        android:paddingTop="10dp"
-                        android:paddingBottom="10dp"
+                        android:textSize="11.5sp"
+                        android:paddingLeft="14dp"
+                        android:paddingRight="14dp"
                         android:gravity="center"
-                        android:stateListAnimator="@null"/>
+                        android:stateListAnimator="@null" />
                 </LinearLayout>
 
-                <!-- Sistem Sabitleme Ayarı -->
+                <!-- Güvenlik Ayarı -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:background="@drawable/card_bg"
-                    android:padding="16dp"
-                    android:layout_marginTop="10dp">
+                    android:padding="14dp"
+                    android:layout_marginTop="8dp">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Sistem Sabitleme Ayarı"
                         android:textColor="@color/text_primary"
-                        android:textSize="15sp"
-                        android:textStyle="bold"/>
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
 
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:layout_marginBottom="12dp"
-                        android:text="Telefonun Güvenlik menüsünden 'Ekrana Sabitleme' özelliğinin açık olduğundan emin olun."
+                        android:layout_marginTop="3dp"
+                        android:layout_marginBottom="8dp"
+                        android:text="Güvenlik menüsünden Ekrana Sabitleme özelliğini kontrol edin."
                         android:textColor="@color/text_secondary"
-                        android:textSize="12sp"/>
+                        android:textSize="11sp" />
 
                     <Button
                         android:id="@+id/btn_open_security_settings"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:minHeight="40dp"
+                        android:layout_height="32dp"
                         android:text="Güvenlik Ayarlarını Aç"
                         android:background="@drawable/btn_secondary"
                         android:textColor="@color/text_primary"
-                        android:textSize="13sp"
-                        android:paddingLeft="20dp"
-                        android:paddingRight="20dp"
-                        android:paddingTop="10dp"
-                        android:paddingBottom="10dp"
+                        android:textSize="11.5sp"
+                        android:paddingLeft="14dp"
+                        android:paddingRight="14dp"
                         android:gravity="center"
-                        android:stateListAnimator="@null"/>
+                        android:stateListAnimator="@null" />
                 </LinearLayout>
 
                 <!-- Geliştirici -->
@@ -508,34 +365,26 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:background="@drawable/card_bg"
-                    android:padding="16dp"
-                    android:layout_marginTop="10dp">
+                    android:padding="14dp"
+                    android:layout_marginTop="8dp">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="GELİŞTİRİCİ"
                         android:textColor="@color/text_muted"
-                        android:textSize="11sp"
+                        android:textSize="10sp"
                         android:textStyle="bold"
-                        android:letterSpacing="0.1"/>
+                        android:letterSpacing="0.1" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Ömer Güvercin"
                         android:textColor="@color/text_primary"
-                        android:textSize="16sp"
+                        android:textSize="14sp"
                         android:textStyle="bold"
-                        android:layout_marginTop="8dp"/>
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="omerguvercinn@gmail.com"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="13sp"
-                        android:layout_marginTop="4dp"/>
+                        android:layout_marginTop="6dp" />
 
                     <TextView
                         android:id="@+id/tv_developer_github"
@@ -543,22 +392,14 @@
                         android:layout_height="wrap_content"
                         android:text="GitHub: github.com/omerguvercin"
                         android:textColor="@color/accent_cyan"
-                        android:textSize="13sp"
-                        android:layout_marginTop="3dp"/>
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="WhatsApp: @omerguvercinn"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="13sp"
-                        android:layout_marginTop="3dp"/>
+                        android:textSize="12sp"
+                        android:layout_marginTop="3dp" />
                 </LinearLayout>
 
             </LinearLayout>
         </ScrollView>
 
-        <!-- ── Kılavuz ── -->
+        <!-- ── 3. KILAVUZ SEKME İÇERİĞİ ── -->
         <ScrollView
             android:id="@+id/view_tab_guide"
             android:layout_width="match_parent"
@@ -577,23 +418,23 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:background="@drawable/card_bg"
-                    android:padding="16dp"
-                    android:layout_marginBottom="10dp">
+                    android:padding="14dp"
+                    android:layout_marginBottom="8dp">
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="1. Temel Kurulum ve Yetkiler"
                         android:textColor="@color/accent_cyan"
-                        android:textSize="14sp"
-                        android:textStyle="bold"/>
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:text="Ayarlar > Erişilebilirlik menüsünden PinMaster'ı açın. Rootsuz yerel kilit desteği için Shizuku uygulamasını kablosuz hata ayıklama ile başlatıp PinMaster'a yetki verin."
+                        android:layout_marginTop="6dp"
+                        android:text="Ayarlar > Erişilebilirlik menüsünden PinMaster'ı açın. Rootsuz kilit desteği için Shizuku kablosuz hata ayıklama yetkisini verin."
                         android:textColor="@color/text_secondary"
-                        android:textSize="13sp"
-                        android:lineSpacingExtra="2dp"/>
+                        android:textSize="12sp"
+                        android:lineSpacingExtra="2dp" />
                 </LinearLayout>
 
                 <!-- 2. Sabit Kilit -->
@@ -602,23 +443,23 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:background="@drawable/card_bg"
-                    android:padding="16dp"
-                    android:layout_marginBottom="10dp">
+                    android:padding="14dp"
+                    android:layout_marginBottom="8dp">
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="2. Sabit Kilit Modu"
                         android:textColor="@color/accent_cyan"
-                        android:textSize="14sp"
-                        android:textStyle="bold"/>
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:text="Uygulamalar sekmesinden seçim yaptığınızda varsayılan olarak Sabit Kilit aktifleşir. Uygulama açıldığı anda ekrana kilitlenir; diğer uygulamalara veya ana ekrana geçilemez."
+                        android:layout_marginTop="6dp"
+                        android:text="Uygulama açıldığı anda ekrana kilitlenir; diğer uygulamalara veya ana ekrana geçilemez."
                         android:textColor="@color/text_secondary"
-                        android:textSize="13sp"
-                        android:lineSpacingExtra="2dp"/>
+                        android:textSize="12sp"
+                        android:lineSpacingExtra="2dp" />
                 </LinearLayout>
 
                 <!-- 3. Sayaçlı Kilit -->
@@ -627,23 +468,23 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:background="@drawable/card_bg"
-                    android:padding="16dp"
-                    android:layout_marginBottom="10dp">
+                    android:padding="14dp"
+                    android:layout_marginBottom="8dp">
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="3. Otomatik Kilit Sayacı"
                         android:textColor="@color/accent_cyan"
-                        android:textSize="14sp"
-                        android:textStyle="bold"/>
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:text="Seçili uygulamanın yanındaki kilit rozetine dokunarak 1, 5, 15, 30 veya 60 dakikalık kullanım süresi belirleyebilirsiniz. Süre dolduğunda cihaz çift titrer ve ekran otomatik kilitlenir."
+                        android:layout_marginTop="6dp"
+                        android:text="Kilitli uygulamanın altındaki 'Kilitli' yazısına dokunarak 1-60 dk süre belirleyebilirsiniz; süre dolunca ekran otomatik kilitlenir."
                         android:textColor="@color/text_secondary"
-                        android:textSize="13sp"
-                        android:lineSpacingExtra="2dp"/>
+                        android:textSize="12sp"
+                        android:lineSpacingExtra="2dp" />
                 </LinearLayout>
 
                 <!-- 4. Sahte Uyarı -->
@@ -652,23 +493,23 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:background="@drawable/card_bg"
-                    android:padding="16dp"
-                    android:layout_marginBottom="10dp">
+                    android:padding="14dp"
+                    android:layout_marginBottom="8dp">
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="4. Sahte Uyarı Modu"
                         android:textColor="@color/accent_cyan"
-                        android:textSize="14sp"
-                        android:textStyle="bold"/>
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:text="Kilit rozetine dokunup modu Sahte Uyarı yaptığınızda uygulama açılışında çökme uyarısı verilir. Uygulamayı kullanmak için 'Uygulamayı kapat' butonuna 1.5 saniye basılı tutulur."
+                        android:layout_marginTop="6dp"
+                        android:text="Uygulama açılışında sahte çökme uyarısı verilir. Açmak için 'Uygulamayı kapat' butonuna 1.5 saniye basılı tutulur."
                         android:textColor="@color/text_secondary"
-                        android:textSize="13sp"
-                        android:lineSpacingExtra="2dp"/>
+                        android:textSize="12sp"
+                        android:lineSpacingExtra="2dp" />
                 </LinearLayout>
 
                 <!-- 5. Mahremiyet Kalkanı -->
@@ -677,23 +518,23 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:background="@drawable/card_bg"
-                    android:padding="16dp"
-                    android:layout_marginBottom="10dp">
+                    android:padding="14dp"
+                    android:layout_marginBottom="8dp">
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="5. Mahremiyet Kalkanı"
                         android:textColor="@color/accent_cyan"
-                        android:textSize="14sp"
-                        android:textStyle="bold"/>
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:text="Ayarlar sekmesinden Mahremiyet Kalkanı açıldığında kilitli uygulamalarda üst bildirim çekmecesinin indirilmesi ve durum çubuğu bildirim balonları engellenir."
+                        android:layout_marginTop="6dp"
+                        android:text="Kilitli uygulamalarda üst bildirim çekmecesinin indirilmesi ve durum çubuğu bildirimleri engellenir."
                         android:textColor="@color/text_secondary"
-                        android:textSize="13sp"
-                        android:lineSpacingExtra="2dp"/>
+                        android:textSize="12sp"
+                        android:lineSpacingExtra="2dp" />
                 </LinearLayout>
 
                 <!-- 6. Kilit Çözme -->
@@ -702,27 +543,77 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:background="@drawable/card_bg"
-                    android:padding="16dp">
+                    android:padding="14dp">
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="6. Kilit Çözme ve Çıkış"
                         android:textColor="@color/accent_cyan"
-                        android:textSize="14sp"
-                        android:textStyle="bold"/>
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:text="Donanım tuşlarıyla (Geri ve Son Uygulamalar tuşlarına aynı anda basarak) kilidi açtığınızda uygulama serbest kalır. Kullanıcı uygulamayı tamamen kapatana kadar tekrar kilitlenmez."
+                        android:layout_marginTop="6dp"
+                        android:text="Donanım tuşlarıyla kilit açıldığında uygulama serbest kalır. Kullanıcı uygulamayı tamamen kapatana kadar tekrar kilitlenmez."
                         android:textColor="@color/text_secondary"
-                        android:textSize="13sp"
-                        android:lineSpacingExtra="2dp"/>
+                        android:textSize="12sp"
+                        android:lineSpacingExtra="2dp" />
                 </LinearLayout>
 
             </LinearLayout>
         </ScrollView>
-
     </FrameLayout>
+
+    <!-- ══════════════════════════════════════════════
+         MODERN SİBER ALT NAVİGASYON BAR (Bottom Dock)
+    ══════════════════════════════════════════════ -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/divider" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:orientation="horizontal"
+        android:background="#0A0E18"
+        android:gravity="center_vertical"
+        android:weightSum="3">
+
+        <TextView
+            android:id="@+id/tab_btn_apps"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:text="UYGULAMALAR"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:textColor="@color/accent_cyan"
+            android:gravity="center"
+            android:background="?android:attr/selectableItemBackground" />
+
+        <TextView
+            android:id="@+id/tab_btn_settings"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:text="AYARLAR"
+            android:textSize="11sp"
+            android:textColor="@color/text_secondary"
+            android:gravity="center"
+            android:background="?android:attr/selectableItemBackground" />
+
+        <TextView
+            android:id="@+id/tab_btn_guide"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:text="KILAVUZ"
+            android:textSize="11sp"
+            android:textColor="@color/text_secondary"
+            android:gravity="center"
+            android:background="?android:attr/selectableItemBackground" />
+    </LinearLayout>
 
 </LinearLayout>

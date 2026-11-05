@@ -5,16 +5,21 @@
     android:layout_height="wrap_content"
     android:orientation="horizontal"
     android:background="@drawable/card_bg"
-    android:padding="10dp"
+    android:paddingLeft="12dp"
+    android:paddingRight="12dp"
+    android:paddingTop="10dp"
+    android:paddingBottom="10dp"
     android:gravity="center_vertical">
 
+    <!-- Uygulama İkonu (Kompakt 32dp) -->
     <ImageView
         android:id="@+id/app_icon"
-        android:layout_width="36dp"
-        android:layout_height="36dp"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
         android:scaleType="fitCenter"
         android:layout_marginEnd="10dp" />
 
+    <!-- Başlık & Siber Durum (Paket adı yok, tam prototip düzeni) -->
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
@@ -26,8 +31,8 @@
             android:id="@+id/app_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="@color/text_primary"
-            android:textSize="13.5sp"
+            android:textColor="#E2E8F0"
+            android:textSize="13sp"
             android:textStyle="bold"
             android:singleLine="true"
             android:maxLines="1"
@@ -37,8 +42,9 @@
             android:id="@+id/app_package"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="@color/text_muted"
+            android:textColor="@color/accent_cyan"
             android:textSize="10.5sp"
+            android:fontFamily="sans-serif-medium"
             android:singleLine="true"
             android:maxLines="1"
             android:ellipsize="end"
@@ -46,20 +52,21 @@
 
     </LinearLayout>
 
+    <!-- Sağ Aksiyonlar: ↗ Butonu ve CyberSwitch -->
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical">
 
-        <!-- Hızlı Fırlatma Butonu ↗ -->
+        <!-- ↗ Hızlı Başlatıcı -->
         <Button
             android:id="@+id/btn_launch_app"
             android:layout_width="26dp"
             android:layout_height="26dp"
             android:background="@drawable/btn_launch"
             android:text="↗"
-            android:textSize="13sp"
+            android:textSize="12.5sp"
             android:textStyle="bold"
             android:textColor="@color/accent_cyan"
             android:gravity="center"
@@ -68,11 +75,11 @@
             android:layout_marginEnd="8dp"
             android:stateListAnimator="@null" />
 
-        <!-- Fütüristik Siber Switch -->
+        <!-- CyberSwitch -->
         <com.pinmaster.app.CyberSwitch
             android:id="@+id/app_switch"
-            android:layout_width="42dp"
-            android:layout_height="24dp"
+            android:layout_width="40dp"
+            android:layout_height="22dp"
             android:focusable="false"
             android:clickable="true" />
 

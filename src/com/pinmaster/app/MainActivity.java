@@ -28,18 +28,16 @@ import java.util.Set;
 
 public class MainActivity extends Activity {
 
-    // Durum kartı
-    private View cardStatus;
-    private TextView tvStatusTitle, tvStatusDesc, tvAdbCommand;
+    // Durum alt metni
+    private TextView tvStatusDesc;
 
-    // Master switch
+    // Master switch & Aksiyonlar
     private CyberSwitch switchMaster;
-    private TextView tvSelectedSummary;
-    private Button btnSelectAll;
-    private Button btnClearSelection;
+    private TextView btnSelectAll;
+    private TextView btnClearSelection;
 
-    // Sekmeler
-    private Button tabBtnApps, tabBtnSettings, tabBtnGuide;
+    // Alt Navigasyon Sekmeleri
+    private TextView tabBtnApps, tabBtnSettings, tabBtnGuide;
     private View viewTabApps, viewTabSettings, viewTabGuide;
 
     // Uygulamalar sekmesi
@@ -53,7 +51,6 @@ public class MainActivity extends Activity {
     private CyberSwitch switchPrivacyShield;
     private TextView tvCurrentCooldown;
     private Button btnChangeCooldown;
-    private Button btnAccessibility;
     private Button btnBatteryOptimization;
     private Button btnSecuritySettings;
     private TextView tvDeveloperGithub;
@@ -94,7 +91,6 @@ public class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
         updateStatus();
-        updateSelectedCountText();
         SettingsManager.syncTargetsToFile(this);
         SettingsManager.applyLockTaskPackages(this);
     }
@@ -103,12 +99,8 @@ public class MainActivity extends Activity {
     // ─── Init ─────────────────────────────────────────────────────────────────
 
     private void initViews() {
-        cardStatus       = findViewById(R.id.card_status);
-        tvStatusTitle    = findViewById(R.id.tv_status_title);
-        tvStatusDesc     = findViewById(R.id.tv_status_desc);
-        tvAdbCommand     = findViewById(R.id.tv_adb_command);
-        tvSelectedSummary = findViewById(R.id.tv_selected_summary);
-        btnSelectAll     = findViewById(R.id.btn_select_all);
+        tvStatusDesc      = findViewById(R.id.tv_status_desc);
+        btnSelectAll      = findViewById(R.id.btn_select_all);
         btnClearSelection = findViewById(R.id.btn_clear_selection);
 
         if (btnSelectAll != null) {
@@ -123,7 +115,6 @@ public class MainActivity extends Activity {
                 if (appAdapter != null) {
                     appAdapter.resort();
                 }
-                updateSelectedCountText();
             });
         }
 
@@ -142,7 +133,6 @@ public class MainActivity extends Activity {
                             if (appAdapter != null) {
                                 appAdapter.resort();
                             }
-                            updateSelectedCountText();
                         })
                         .setNegativeButton("İptal", null)
                         .show();
@@ -171,14 +161,8 @@ public class MainActivity extends Activity {
         switchPrivacyShield    = findViewById(R.id.switch_privacy_shield);
         tvCurrentCooldown      = findViewById(R.id.tv_current_cooldown);
         btnChangeCooldown      = findViewById(R.id.btn_change_cooldown);
-        btnAccessibility       = findViewById(R.id.btn_open_accessibility);
         btnBatteryOptimization = findViewById(R.id.btn_battery_optimization);
         btnSecuritySettings    = findViewById(R.id.btn_open_security_settings);
-
-        if (btnAccessibility != null) {
-            btnAccessibility.setOnClickListener(v ->
-                    startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)));
-        }
 
         if (btnBatteryOptimization != null) {
             btnBatteryOptimization.setOnClickListener(v -> {
@@ -216,58 +200,48 @@ public class MainActivity extends Activity {
         }
     }
 
-    // ─── Status card ──────────────────────────────────────────────────────────
+    // ─── Status ──────────────────────────────────────────────────────────────
 
     private void updateStatus() {
         boolean masterEnabled  = SettingsManager.isMasterEnabled(this);
         boolean accessEnabled  = isAccessibilityEnabled();
 
-        if (!masterEnabled) {
-            tvStatusTitle.setText("Kalkan Duraklatıldı");
-            tvStatusDesc.setText("Otomatik koruma geçici olarak devre dışı.");
-            cardStatus.setBackgroundResource(R.drawable.badge_inactive);
-            tvAdbCommand.setVisibility(View.GONE);
-        } else if (!accessEnabled) {
-            tvStatusTitle.setText("Erişilebilirlik İzni Gerekli");
-            tvStatusDesc.setText("'Erişilebilirliği Aç' butonuna basıp PinMaster'ı etkinleştirin.");
-            cardStatus.setBackgroundResource(R.drawable.badge_inactive);
-            tvAdbCommand.setVisibility(View.GONE);
-        } else if (!ShizukuHelper.isShizukuInstalled(this)) {
-            tvStatusTitle.setText("Shizuku Yüklü Değil");
-            tvStatusDesc.setText("PinMaster'ın rootsuz yerel kilit atabilmesi için Shizuku gereklidir. Yüklemek için dokunun.");
-            cardStatus.setBackgroundResource(R.drawable.badge_inactive);
-            tvAdbCommand.setVisibility(View.VISIBLE);
-            tvAdbCommand.setText("Shizuku'yu Yükle (Google Play)");
-            tvAdbCommand.setOnClickListener(v -> {
-                try {
-                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=moe.shizuku.privileged.api")));
-                } catch (Exception e) {
-                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=moe.shizuku.privileged.api")));
-                }
-            });
-        } else if (!ShizukuHelper.isShizukuAvailable()) {
-            tvStatusTitle.setText("Shizuku Servisi Başlatılmadı");
-            tvStatusDesc.setText("Yerel sabitleme için Shizuku uygulamasını açıp 'Başlat'a dokunun ya da bilgisayardan başlatın.");
-            cardStatus.setBackgroundResource(R.drawable.badge_inactive);
-            tvAdbCommand.setVisibility(View.VISIBLE);
-            tvAdbCommand.setText("Shizuku Uygulamasını Aç");
-            tvAdbCommand.setOnClickListener(v -> {
-                Intent launch = getPackageManager().getLaunchIntentForPackage("moe.shizuku.privileged.api");
-                if (launch != null) startActivity(launch);
-            });
-        } else if (!ShizukuHelper.hasPermission()) {
-            tvStatusTitle.setText("Shizuku İzni Gerekli");
-            tvStatusDesc.setText("PinMaster'ın kilit komutunu gönderebilmesi için Shizuku iznini onaylayın.");
-            cardStatus.setBackgroundResource(R.drawable.badge_inactive);
-            tvAdbCommand.setVisibility(View.VISIBLE);
-            tvAdbCommand.setText("İzin İste");
-            tvAdbCommand.setOnClickListener(v -> ShizukuHelper.requestPermission(ShizukuHelper.REQUEST_CODE_SHIZUKU));
-        } else {
-            tvStatusTitle.setText("Kalkan Devrede");
-            tvStatusDesc.setText("Shizuku yerel koruması etkin. Seçilen uygulamalar doğrudan kilitlenecek.");
-            cardStatus.setBackgroundResource(R.drawable.badge_active);
-            tvAdbCommand.setVisibility(View.GONE);
-            ShizukuHelper.ensureAgentRunning();
+        if (tvStatusDesc != null) {
+            if (!masterEnabled) {
+                tvStatusDesc.setText("Kalkan Duraklatıldı");
+                tvStatusDesc.setTextColor(getResources().getColor(R.color.text_muted));
+                tvStatusDesc.setOnClickListener(null);
+            } else if (!accessEnabled) {
+                tvStatusDesc.setText("Erişilebilirlik İzni Gerekli (Dokunun)");
+                tvStatusDesc.setTextColor(getResources().getColor(R.color.accent_red));
+                tvStatusDesc.setOnClickListener(v -> startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)));
+            } else if (!ShizukuHelper.isShizukuInstalled(this)) {
+                tvStatusDesc.setText("Shizuku Gerekli (Google Play)");
+                tvStatusDesc.setTextColor(getResources().getColor(R.color.accent_orange));
+                tvStatusDesc.setOnClickListener(v -> {
+                    try {
+                        startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=moe.shizuku.privileged.api")));
+                    } catch (Exception e) {
+                        startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=moe.shizuku.privileged.api")));
+                    }
+                });
+            } else if (!ShizukuHelper.isShizukuAvailable()) {
+                tvStatusDesc.setText("Shizuku Başlatılmadı (Dokunun)");
+                tvStatusDesc.setTextColor(getResources().getColor(R.color.accent_orange));
+                tvStatusDesc.setOnClickListener(v -> {
+                    Intent launch = getPackageManager().getLaunchIntentForPackage("moe.shizuku.privileged.api");
+                    if (launch != null) startActivity(launch);
+                });
+            } else if (!ShizukuHelper.hasPermission()) {
+                tvStatusDesc.setText("Shizuku İzni Gerekli (Dokunun)");
+                tvStatusDesc.setTextColor(getResources().getColor(R.color.accent_orange));
+                tvStatusDesc.setOnClickListener(v -> ShizukuHelper.requestPermission(ShizukuHelper.REQUEST_CODE_SHIZUKU));
+            } else {
+                tvStatusDesc.setText("Kalkan Aktif");
+                tvStatusDesc.setTextColor(getResources().getColor(R.color.text_secondary));
+                tvStatusDesc.setOnClickListener(null);
+                ShizukuHelper.ensureAgentRunning();
+            }
         }
 
         if (switchMaster != null) {
@@ -359,9 +333,9 @@ public class MainActivity extends Activity {
         tabBtnSettings.setTextColor(index == 1 ? active : inactive);
         tabBtnGuide.setTextColor(index == 2 ? active : inactive);
 
-        tabBtnApps.setBackgroundResource(index == 0 ? R.drawable.tab_selected_bg : android.R.color.transparent);
-        tabBtnSettings.setBackgroundResource(index == 1 ? R.drawable.tab_selected_bg : android.R.color.transparent);
-        tabBtnGuide.setBackgroundResource(index == 2 ? R.drawable.tab_selected_bg : android.R.color.transparent);
+        tabBtnApps.setBackgroundResource(index == 0 ? R.color.divider : android.R.color.transparent);
+        tabBtnSettings.setBackgroundResource(index == 1 ? R.color.divider : android.R.color.transparent);
+        tabBtnGuide.setBackgroundResource(index == 2 ? R.color.divider : android.R.color.transparent);
 
         tabBtnApps.setTypeface(null, index == 0 ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
         tabBtnSettings.setTypeface(null, index == 1 ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
@@ -381,12 +355,6 @@ public class MainActivity extends Activity {
     }
 
     // ─── App list ─────────────────────────────────────────────────────────────
-
-    private void updateSelectedCountText() {
-        if (tvSelectedSummary == null) return;
-        int count = SettingsManager.getPinnedPackages(this).size();
-        tvSelectedSummary.setText(String.format(getString(R.string.selected_apps_count), count));
-    }
 
     private void loadInstalledApps() {
         new AsyncTask<Void, Void, List<AppModel>>() {
@@ -418,10 +386,8 @@ public class MainActivity extends Activity {
             @Override
             protected void onPostExecute(List<AppModel> result) {
                 appList = result;
-                appAdapter = new AppAdapter(MainActivity.this, appList,
-                        (app, isPinned) -> updateSelectedCountText());
+                appAdapter = new AppAdapter(MainActivity.this, appList, null);
                 listApps.setAdapter(appAdapter);
-                updateSelectedCountText();
             }
         }.execute();
     }

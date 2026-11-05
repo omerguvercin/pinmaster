@@ -136,7 +136,7 @@ public class AppAdapter extends BaseAdapter {
             if (holder.cardContainer != null) {
                 holder.cardContainer.setBackgroundResource(R.drawable.card_bg);
             }
-            holder.pkg.setText(app.getPackageName());
+            holder.pkg.setText("Pasif");
             holder.pkg.setTextColor(context.getResources().getColor(R.color.text_muted));
         }
 
