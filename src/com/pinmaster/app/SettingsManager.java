@@ -9,7 +9,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class SettingsManager {
     private static final String PREF_NAME    = "pinmaster_settings";
@@ -17,6 +19,14 @@ public class SettingsManager {
     private static final String KEY_MASTER   = "master_enabled";
     private static final String KEY_VIBRATE  = "vibrate_enabled";
     private static final String KEY_PIN      = "exit_pin";
+    private static final String PREF_MODE_PREFIX = "mode_";
+
+    public static final int LOCK_MODE_PIN        = 0; // Sabit Kilit
+    public static final int LOCK_MODE_FAKE_CRASH = 1; // Sahte Uyarı
+    public static final int LOCK_MODE_TIMER      = 2; // Sayaç Kilit
+
+    // Geçici bypass hafızası (Örn: Sahte Uyarı 3 saniye basılı tutulup aşıldığında)
+    private static final Map<String, Long> bypassMap = new ConcurrentHashMap<>();
 
     private static SharedPreferences getPrefs(Context ctx) {
         return ctx.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
@@ -61,11 +71,58 @@ public class SettingsManager {
     public static void selectAllPackages(Context ctx, java.util.Collection<String> packages) {
         if (packages == null) return;
         Set<String> set = new HashSet<>(packages);
-        // Exclude PinMaster itself
         set.remove(ctx.getPackageName());
         getPrefs(ctx).edit().putStringSet(KEY_PINNED, set).apply();
         applyLockTaskPackages(ctx);
         syncTargetsToFile(ctx);
+    }
+
+    // ─── Lock Modes (Kilit Türleri) ───────────────────────────────────────────
+
+    public static int getAppLockMode(Context ctx, String pkg) {
+        if (pkg == null) return LOCK_MODE_PIN;
+        return getPrefs(ctx).getInt(PREF_MODE_PREFIX + pkg, LOCK_MODE_PIN);
+    }
+
+    public static void setAppLockMode(Context ctx, String pkg, int mode) {
+        if (pkg == null) return;
+        getPrefs(ctx).edit().putInt(PREF_MODE_PREFIX + pkg, mode).apply();
+        applyLockTaskPackages(ctx);
+        syncTargetsToFile(ctx);
+    }
+
+    public static String getLockModeLabel(int mode) {
+        switch (mode) {
+            case LOCK_MODE_FAKE_CRASH:
+                return "Sahte Uyarı";
+            case LOCK_MODE_TIMER:
+                return "Sayaç Kilit";
+            case LOCK_MODE_PIN:
+            default:
+                return "Sabit Kilit";
+        }
+    }
+
+    // ─── Bypass Yönetimi ──────────────────────────────────────────────────────
+
+    public static void grantBypass(String pkg, long durationMs) {
+        if (pkg == null) return;
+        bypassMap.put(pkg, System.currentTimeMillis() + durationMs);
+    }
+
+    public static boolean isBypassActive(String pkg) {
+        if (pkg == null) return false;
+        Long until = bypassMap.get(pkg);
+        if (until == null) return false;
+        if (System.currentTimeMillis() <= until) {
+            return true;
+        }
+        bypassMap.remove(pkg);
+        return false;
+    }
+
+    public static void clearBypass(String pkg) {
+        if (pkg != null) bypassMap.remove(pkg);
     }
 
     // ─── Vibrate ──────────────────────────────────────────────────────────────
@@ -113,7 +170,10 @@ public class SettingsManager {
             if (master) {
                 for (String p : pkgs) {
                     if (p != null && !p.trim().isEmpty()) {
-                        sb.append(p.trim()).append("\n");
+                        // Sahte Uyarı modundakiler ADB daemon'ı tarafından ekrana kilitlenmemeli (çökme gösterilecek)
+                        if (getAppLockMode(context, p) != LOCK_MODE_FAKE_CRASH) {
+                            sb.append(p.trim()).append("\n");
+                        }
                     }
                 }
             }
@@ -192,7 +252,11 @@ public class SettingsManager {
 
             Set<String> pkgs = new HashSet<>();
             if (isMasterEnabled(ctx)) {
-                pkgs.addAll(getPinnedPackages(ctx));
+                for (String p : getPinnedPackages(ctx)) {
+                    if (getAppLockMode(ctx, p) != LOCK_MODE_FAKE_CRASH) {
+                        pkgs.add(p);
+                    }
+                }
             }
             pkgs.add(ctx.getPackageName());
 

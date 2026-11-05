@@ -1,5 +1,6 @@
 package com.pinmaster.app;
 
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -77,6 +78,7 @@ public class AppAdapter extends BaseAdapter {
         ImageView icon;
         TextView name;
         TextView pkg;
+        TextView lockMode;
         Button btnLaunch;
         Switch toggle;
     }
@@ -90,6 +92,7 @@ public class AppAdapter extends BaseAdapter {
             holder.icon = convertView.findViewById(R.id.app_icon);
             holder.name = convertView.findViewById(R.id.app_name);
             holder.pkg = convertView.findViewById(R.id.app_package);
+            holder.lockMode = convertView.findViewById(R.id.tv_lock_mode);
             holder.btnLaunch = convertView.findViewById(R.id.btn_launch_app);
             holder.toggle = convertView.findViewById(R.id.app_switch);
             convertView.setTag(holder);
@@ -105,6 +108,22 @@ public class AppAdapter extends BaseAdapter {
         }
         holder.toggle.setChecked(app.isPinned());
 
+        // Kilit Modu Rozeti (Sabit Kilit / Sahte Uyarı)
+        if (app.isPinned()) {
+            holder.lockMode.setVisibility(View.VISIBLE);
+            int currentMode = SettingsManager.getAppLockMode(context, app.getPackageName());
+            holder.lockMode.setText(SettingsManager.getLockModeLabel(currentMode));
+            int colorRes = (currentMode == SettingsManager.LOCK_MODE_FAKE_CRASH) 
+                    ? R.color.accent_violet 
+                    : R.color.accent_cyan;
+            holder.lockMode.setTextColor(context.getResources().getColor(colorRes));
+
+            holder.lockMode.setOnClickListener(v -> showModeDialog(app));
+        } else {
+            holder.lockMode.setVisibility(View.GONE);
+            holder.lockMode.setOnClickListener(null);
+        }
+
         // Satıra veya Switch'e basıldığında PIN kilit durumunu değiştir
         View.OnClickListener toggleListener = v -> {
             boolean newState = !app.isPinned();
@@ -119,6 +138,15 @@ public class AppAdapter extends BaseAdapter {
 
         convertView.setOnClickListener(toggleListener);
         holder.toggle.setOnClickListener(toggleListener);
+
+        // Satıra uzun basıldığında da kilit türü menüsü açılsın
+        convertView.setOnLongClickListener(v -> {
+            if (app.isPinned()) {
+                showModeDialog(app);
+                return true;
+            }
+            return false;
+        });
 
         // 'Aç' butonuna (↗) basıldığında uygulamayı doğrudan başlat
         if (holder.btnLaunch != null) {
@@ -139,5 +167,22 @@ public class AppAdapter extends BaseAdapter {
         }
 
         return convertView;
+    }
+
+    private void showModeDialog(AppModel app) {
+        final String[] options = {"Sabit Kilit", "Sahte Uyarı"};
+        int currentMode = SettingsManager.getAppLockMode(context, app.getPackageName());
+        int selectedIndex = (currentMode == SettingsManager.LOCK_MODE_FAKE_CRASH) ? 1 : 0;
+
+        new AlertDialog.Builder(context)
+                .setTitle("Kilit Türü")
+                .setSingleChoiceItems(options, selectedIndex, (dialog, which) -> {
+                    int newMode = (which == 1) ? SettingsManager.LOCK_MODE_FAKE_CRASH : SettingsManager.LOCK_MODE_PIN;
+                    SettingsManager.setAppLockMode(context, app.getPackageName(), newMode);
+                    notifyDataSetChanged();
+                    dialog.dismiss();
+                })
+                .setNegativeButton("İptal", null)
+                .show();
     }
 }

@@ -122,6 +122,21 @@ public class PinAccessibilityService extends AccessibilityService {
                 return;
             }
 
+            // Kilit Türü Kontrolü:
+            int mode = SettingsManager.getAppLockMode(this, currentPkg);
+            if (mode == SettingsManager.LOCK_MODE_FAKE_CRASH) {
+                // Eğer sahibi 3 saniye basarak bypass ettiyse çökme gösterme
+                if (SettingsManager.isBypassActive(currentPkg)) {
+                    return;
+                }
+                // Sahte Çökme Kalkanını Aç
+                Intent fakeIntent = new Intent(this, FakeCrashActivity.class);
+                fakeIntent.putExtra(FakeCrashActivity.EXTRA_TARGET_PKG, currentPkg);
+                fakeIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                startActivity(fakeIntent);
+                return;
+            }
+
             isInsideProtectedApp = true;
             activeGuardedPkg = currentPkg;
             sessionLockedPkg = currentPkg;
