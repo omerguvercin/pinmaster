@@ -89,9 +89,8 @@ public class AppAdapter extends BaseAdapter {
         ImageView icon;
         TextView name;
         TextView pkg;
-        TextView lockMode;
         Button btnLaunch;
-        Switch toggle;
+        CyberSwitch toggle;
     }
 
     @Override
@@ -104,7 +103,6 @@ public class AppAdapter extends BaseAdapter {
             holder.icon = convertView.findViewById(R.id.app_icon);
             holder.name = convertView.findViewById(R.id.app_name);
             holder.pkg = convertView.findViewById(R.id.app_package);
-            holder.lockMode = convertView.findViewById(R.id.tv_lock_mode);
             holder.btnLaunch = convertView.findViewById(R.id.btn_launch_app);
             holder.toggle = convertView.findViewById(R.id.app_switch);
             convertView.setTag(holder);
@@ -114,45 +112,39 @@ public class AppAdapter extends BaseAdapter {
 
         final AppModel app = getItem(position);
         holder.name.setText(app.getAppName());
-        holder.pkg.setText(app.getPackageName());
         if (app.getIcon() != null) {
             holder.icon.setImageDrawable(app.getIcon());
         }
-        holder.toggle.setChecked(app.isPinned());
+        holder.toggle.setChecked(app.isPinned(), false);
 
-        // Kilit Modu Rozeti (Kilitli / Kilitli: 15dk / Sahte Uyarı) ve Siber Kart Arka Planı
+        // Cyber-Shield: Kilit durumuna göre renkli siber alt metin ve neon kart çerçevesi
         if (app.isPinned()) {
             if (holder.cardContainer != null) {
                 holder.cardContainer.setBackgroundResource(R.drawable.card_bg_active);
             }
-            holder.pkg.setVisibility(View.GONE);
-            holder.lockMode.setVisibility(View.VISIBLE);
             int currentMode = SettingsManager.getAppLockMode(context, app.getPackageName());
             int timerMin = SettingsManager.getAppTimerMinutes(context, app.getPackageName());
-            holder.lockMode.setText(SettingsManager.getLockModeLabel(context, app.getPackageName()));
+            holder.pkg.setText(SettingsManager.getLockModeLabel(context, app.getPackageName()));
             int colorRes = R.color.accent_cyan;
             if (currentMode == SettingsManager.LOCK_MODE_FAKE_CRASH) {
                 colorRes = R.color.accent_violet;
             } else if (timerMin > 0) {
                 colorRes = R.color.accent_orange;
             }
-            holder.lockMode.setTextColor(context.getResources().getColor(colorRes));
-
-            holder.lockMode.setOnClickListener(v -> showModeDialog(app));
+            holder.pkg.setTextColor(context.getResources().getColor(colorRes));
         } else {
             if (holder.cardContainer != null) {
                 holder.cardContainer.setBackgroundResource(R.drawable.card_bg);
             }
-            holder.pkg.setVisibility(View.VISIBLE);
-            holder.lockMode.setVisibility(View.GONE);
-            holder.lockMode.setOnClickListener(null);
+            holder.pkg.setText(app.getPackageName());
+            holder.pkg.setTextColor(context.getResources().getColor(R.color.text_muted));
         }
 
         // Satıra veya Switch'e basıldığında PIN kilit durumunu değiştir
         View.OnClickListener toggleListener = v -> {
             boolean newState = !app.isPinned();
             app.setPinned(newState);
-            holder.toggle.setChecked(newState);
+            holder.toggle.setChecked(newState, true);
             SettingsManager.setPackagePinned(context, app.getPackageName(), newState);
             resort();
             if (pinChangeListener != null) {
@@ -162,6 +154,15 @@ public class AppAdapter extends BaseAdapter {
 
         convertView.setOnClickListener(toggleListener);
         holder.toggle.setOnClickListener(toggleListener);
+
+        // Kilitliyken alt yazıya veya karta uzun basıldığında kilit türü menüsü
+        holder.pkg.setOnClickListener(v -> {
+            if (app.isPinned()) {
+                showModeDialog(app);
+            } else {
+                toggleListener.onClick(v);
+            }
+        });
 
         // Satıra uzun basıldığında da kilit türü menüsü açılsın
         convertView.setOnLongClickListener(v -> {

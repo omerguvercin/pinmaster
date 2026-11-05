@@ -33,7 +33,7 @@ public class MainActivity extends Activity {
     private TextView tvStatusTitle, tvStatusDesc, tvAdbCommand;
 
     // Master switch
-    private Switch switchMaster;
+    private CyberSwitch switchMaster;
     private TextView tvSelectedSummary;
     private Button btnSelectAll;
     private Button btnClearSelection;
@@ -49,8 +49,8 @@ public class MainActivity extends Activity {
     private List<AppModel> appList = new ArrayList<>();
 
     // Ayarlar sekmesi
-    private Switch switchVibrate;
-    private Switch switchPrivacyShield;
+    private CyberSwitch switchVibrate;
+    private CyberSwitch switchPrivacyShield;
     private TextView tvCurrentCooldown;
     private Button btnChangeCooldown;
     private Button btnAccessibility;
@@ -270,7 +270,9 @@ public class MainActivity extends Activity {
             ShizukuHelper.ensureAgentRunning();
         }
 
-        switchMaster.setChecked(masterEnabled);
+        if (switchMaster != null) {
+            switchMaster.setChecked(masterEnabled, false);
+        }
     }
 
     private boolean isAccessibilityEnabled() {

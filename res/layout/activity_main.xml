@@ -28,9 +28,9 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="PinMaster"
-                android:textSize="28sp"
+                android:textSize="26sp"
                 android:textStyle="bold"
-                android:textColor="@color/text_primary"
+                android:textColor="@color/accent_cyan"
                 android:fontFamily="sans-serif-medium"/>
 
             <TextView
@@ -42,16 +42,10 @@
         </LinearLayout>
 
         <!-- Master switch — sağ üstte -->
-        <Switch
+        <com.pinmaster.app.CyberSwitch
             android:id="@+id/switch_master"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:track="@drawable/switch_track"
-            android:thumb="@drawable/switch_thumb"
-            android:splitTrack="false"
-            android:showText="false"
-            android:scaleX="0.88"
-            android:scaleY="0.88"/>
+            android:layout_width="44dp"
+            android:layout_height="26dp" />
     </LinearLayout>
 
     <!-- ══════════════════════════════════════════════
@@ -298,14 +292,10 @@
                             android:textSize="12sp"/>
                     </LinearLayout>
 
-                    <Switch
+                    <com.pinmaster.app.CyberSwitch
                         android:id="@+id/switch_vibrate"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:track="@drawable/switch_track"
-                        android:thumb="@drawable/switch_thumb"
-                        android:splitTrack="false"
-                        android:showText="false"/>
+                        android:layout_width="44dp"
+                        android:layout_height="26dp" />
                 </LinearLayout>
 
                 <!-- Mahremiyet Kalkanı -->
@@ -340,14 +330,10 @@
                             android:textSize="12sp"/>
                     </LinearLayout>
 
-                    <Switch
+                    <com.pinmaster.app.CyberSwitch
                         android:id="@+id/switch_privacy_shield"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:track="@drawable/switch_track"
-                        android:thumb="@drawable/switch_thumb"
-                        android:splitTrack="false"
-                        android:showText="false"/>
+                        android:layout_width="44dp"
+                        android:layout_height="26dp" />
                 </LinearLayout>
 
 
