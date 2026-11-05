@@ -20,6 +20,7 @@ public class SettingsManager {
     private static final String KEY_VIBRATE  = "vibrate_enabled";
     private static final String KEY_PIN      = "exit_pin";
     private static final String PREF_MODE_PREFIX = "mode_";
+    private static final String PREF_TIMER_PREFIX = "timer_min_";
 
     public static final int LOCK_MODE_PIN        = 0; // Sabit Kilit
     public static final int LOCK_MODE_FAKE_CRASH = 1; // Sahte Uyarı
@@ -89,6 +90,29 @@ public class SettingsManager {
         getPrefs(ctx).edit().putInt(PREF_MODE_PREFIX + pkg, mode).apply();
         applyLockTaskPackages(ctx);
         syncTargetsToFile(ctx);
+    }
+
+    public static int getAppTimerMinutes(Context ctx, String pkg) {
+        if (pkg == null) return 15;
+        return getPrefs(ctx).getInt(PREF_TIMER_PREFIX + pkg, 15);
+    }
+
+    public static void setAppTimerMinutes(Context ctx, String pkg, int minutes) {
+        if (pkg == null) return;
+        getPrefs(ctx).edit().putInt(PREF_TIMER_PREFIX + pkg, minutes).apply();
+    }
+
+    public static String getLockModeLabel(Context ctx, String pkg) {
+        int mode = getAppLockMode(ctx, pkg);
+        switch (mode) {
+            case LOCK_MODE_FAKE_CRASH:
+                return "Sahte Uyarı";
+            case LOCK_MODE_TIMER:
+                return "Sayaç: " + getAppTimerMinutes(ctx, pkg) + "dk";
+            case LOCK_MODE_PIN:
+            default:
+                return "Sabit Kilit";
+        }
     }
 
     public static String getLockModeLabel(int mode) {

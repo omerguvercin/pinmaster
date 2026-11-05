@@ -9,6 +9,7 @@
     <color name="accent_violet">#B388FF</color>
     <color name="accent_green">#00E676</color>
     <color name="accent_red">#FF5252</color>
+    <color name="accent_orange">#FFAB40</color>
     
     <color name="text_primary">#FFFFFF</color>
     <color name="text_secondary">#9E9EB4</color>

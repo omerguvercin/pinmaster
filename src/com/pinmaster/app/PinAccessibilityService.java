@@ -41,9 +41,14 @@ public class PinAccessibilityService extends AccessibilityService {
     private View fakeCrashView;
     private volatile boolean isFakeCrashShowing = false;
     private volatile String currentFakeCrashPkg = null;
-    private static volatile String ownerUnlockedPkg = null; // Yalnızca sahibi 3 saniye basarak açtığında atanır
+    private static volatile String ownerUnlockedPkg = null; // Yalnızca sahibi 1.5 saniye basarak açtığında atanır
     private final Handler fakeCrashHandler = new Handler(Looper.getMainLooper());
     private boolean isFakeHoldUnlocked = false;
+
+    // Sayaç Kilit (Süreli Çocuk Kalkanı) Değişkenleri
+    private final Handler timerLockHandler = new Handler(Looper.getMainLooper());
+    private Runnable activeTimerRunnable = null;
+    private static volatile String activeTimerPkg = null;
 
     // PIN Kilit Ekranı (Overlay) Değişkenleri
     private WindowManager windowManager;
@@ -88,6 +93,7 @@ public class PinAccessibilityService extends AccessibilityService {
 
         // Ana anahtar kapalıysa korumayı sıfırla
         if (!SettingsManager.isMasterEnabled(this)) {
+            cancelActiveTimer();
             isInsideProtectedApp = false;
             activeGuardedPkg = null;
             sessionLockedPkg = null;
@@ -121,6 +127,7 @@ public class PinAccessibilityService extends AccessibilityService {
 
         // Kullanıcı donanım tuşlarına basarak sabitlemeyi kaldırdıysa:
         if (wasLockTaskActive && !isCurrentlyLocked) {
+            cancelActiveTimer();
             if (activeGuardedPkg != null) {
                 unpinnedPkg = activeGuardedPkg;
                 long cooldownMs = SettingsManager.getCooldownSeconds(this) * 1000L;
@@ -141,7 +148,8 @@ public class PinAccessibilityService extends AccessibilityService {
             // A. SAHTE UYARI (FAKE CRASH) MODU
             // ══════════════════════════════════════════════
             if (appMode == SettingsManager.LOCK_MODE_FAKE_CRASH) {
-                // Sahibi 3 saniye basarak açtıysa ve hala içindeyse engelleme
+                cancelActiveTimer();
+                // Sahibi 1.5 saniye basarak açtıysa ve hala içindeyse engelleme
                 if (currentPkg.equals(ownerUnlockedPkg)) {
                     android.util.Log.i("PinMaster", "Sahibi kilidi asmis, erisime izin verildi: " + currentPkg);
                     return;
@@ -156,8 +164,58 @@ public class PinAccessibilityService extends AccessibilityService {
             }
 
             // ══════════════════════════════════════════════
-            // B. SABİT KİLİT (STANDART PIN) MODU
+            // B. SAYAÇ KİLİT (SÜRELİ ÇOCUK KALKANI) MODU
             // ══════════════════════════════════════════════
+            if (appMode == SettingsManager.LOCK_MODE_TIMER) {
+                hideFakeCrashOverlay();
+
+                // Kullanıcı bu uygulamayı az önce donanım tuşlarıyla unpin yaptıysa bekleme süresince tekrar kilitleme
+                if (currentPkg.equals(unpinnedPkg) && now < unpinnedUntil) {
+                    return;
+                }
+
+                // Bu uygulama için sayaç henüz başlamadıysa başlat
+                if (!currentPkg.equals(activeTimerPkg)) {
+                    cancelActiveTimer();
+                    activeTimerPkg = currentPkg;
+                    final String timerPkg = currentPkg;
+                    int minutes = SettingsManager.getAppTimerMinutes(this, currentPkg);
+                    long durationMs = minutes * 60 * 1000L;
+                    android.util.Log.i("PinMaster", "Gizli Sayac baslatildi: " + timerPkg + " Sure: " + minutes + " dk (" + durationMs + " ms)");
+
+                    activeTimerRunnable = () -> {
+                        android.util.Log.i("PinMaster", "Sayac doldu! Uygulama: " + timerPkg + " -> Sabitleme kaldirilip ekran kilitleniyor.");
+                        vibrateDouble();
+                        if (ShizukuHelper.hasPermission()) {
+                            ShizukuHelper.unlockTask();
+                        }
+                        performGlobalAction(GLOBAL_ACTION_HOME);
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                            mainHandler.postDelayed(() -> {
+                                performGlobalAction(GLOBAL_ACTION_LOCK_SCREEN);
+                            }, 400);
+                        }
+                        cancelActiveTimer();
+                    };
+                    timerLockHandler.postDelayed(activeTimerRunnable, durationMs);
+                }
+
+                isInsideProtectedApp = true;
+                activeGuardedPkg = currentPkg;
+                sessionLockedPkg = currentPkg;
+                hideOverlay();
+
+                // Shizuku aktifse doğrudan işletim sistemi seviyesinde sabitle (App Pinning)
+                if (ShizukuHelper.hasPermission()) {
+                    ShizukuHelper.lockTopApp(currentPkg);
+                }
+                return;
+            }
+
+            // ══════════════════════════════════════════════
+            // C. SABİT KİLİT (STANDART PIN) MODU
+            // ══════════════════════════════════════════════
+            cancelActiveTimer();
             hideFakeCrashOverlay();
 
             // Kullanıcı bu uygulamayı az önce donanım tuşlarıyla unpin yaptıysa bekleme süresince tekrar kilitleme
@@ -187,6 +245,12 @@ public class PinAccessibilityService extends AccessibilityService {
         if (ownerUnlockedPkg != null && !ownerUnlockedPkg.equals(currentPkg) && !getPackageName().equals(currentPkg)) {
             android.util.Log.i("PinMaster", "Kullanici Sahte Uyari uygulamasindan cikti: " + ownerUnlockedPkg + " -> Yeni: " + currentPkg);
             ownerUnlockedPkg = null;
+        }
+
+        // Eğer sayaçlı bir uygulamadan çıktıysa sayacı iptal et
+        if (activeTimerPkg != null && !activeTimerPkg.equals(currentPkg)) {
+            android.util.Log.i("PinMaster", "Sayacli uygulamadan cikildi: " + activeTimerPkg + " -> Yeni: " + currentPkg);
+            cancelActiveTimer();
         }
 
         if (sessionLockedPkg != null && !sessionLockedPkg.equals(currentPkg)) {
@@ -585,8 +649,17 @@ public class PinAccessibilityService extends AccessibilityService {
         } catch (Exception ignored) {}
     }
 
+    private void cancelActiveTimer() {
+        if (activeTimerRunnable != null) {
+            timerLockHandler.removeCallbacks(activeTimerRunnable);
+            activeTimerRunnable = null;
+        }
+        activeTimerPkg = null;
+    }
+
     @Override
     public void onInterrupt() {
+        cancelActiveTimer();
         isInsideProtectedApp = false;
         activeGuardedPkg = null;
         ownerUnlockedPkg = null;
@@ -597,6 +670,7 @@ public class PinAccessibilityService extends AccessibilityService {
     @Override
     public void onDestroy() {
         super.onDestroy();
+        cancelActiveTimer();
         hideOverlay();
         hideFakeCrashOverlay();
     }
