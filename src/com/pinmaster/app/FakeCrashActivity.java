@@ -1,7 +1,9 @@
 package com.pinmaster.app;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
@@ -12,40 +14,41 @@ import android.os.Looper;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.view.MotionEvent;
-import android.view.View;
-import android.widget.TextView;
+import android.widget.Button;
 
 public class FakeCrashActivity extends Activity {
 
     public static final String EXTRA_TARGET_PKG = "target_pkg";
-    private static final long UNLOCK_HOLD_MS = 3000; // Tam 3 saniye basılı tutma
+    private static final long UNLOCK_HOLD_MS = 3000; // 3 saniye
 
     private String targetPkg;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private boolean isUnlocked = false;
+    private AlertDialog crashDialog;
 
     private final Runnable unlockRunnable = new Runnable() {
         @Override
         public void run() {
             isUnlocked = true;
-            // Titreşimli geri bildirim
             try {
                 Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
                 if (v != null) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        v.vibrate(VibrationEffect.createOneShot(150, VibrationEffect.DEFAULT_AMPLITUDE));
+                        v.vibrate(VibrationEffect.createOneShot(120, VibrationEffect.DEFAULT_AMPLITUDE));
                     } else {
-                        v.vibrate(150);
+                        v.vibrate(120);
                     }
                 }
             } catch (Exception ignored) {}
 
-            // 3 dakika (180.000 ms) boyunca sahibe kesintisiz bypass izni ver
+            // Sahibe oturum izni ver
             if (targetPkg != null) {
-                SettingsManager.grantBypass(targetPkg, 180000);
+                PinAccessibilityService.setOwnerUnlocked(targetPkg);
             }
 
-            // Çökme ekranını kapat ve asıl uygulamaya geç
+            if (crashDialog != null && crashDialog.isShowing()) {
+                crashDialog.dismiss();
+            }
             finish();
         }
     };
@@ -53,7 +56,6 @@ public class FakeCrashActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_fake_crash);
 
         targetPkg = getIntent().getStringExtra(EXTRA_TARGET_PKG);
 
@@ -66,42 +68,49 @@ public class FakeCrashActivity extends Activity {
             } catch (Exception ignored) {}
         }
 
-        TextView tvTitle = findViewById(R.id.tv_fake_app_title);
-        TextView tvMessage = findViewById(R.id.tv_fake_app_message);
-        TextView btnFeedback = findViewById(R.id.btn_fake_feedback);
-        TextView btnClose = findViewById(R.id.btn_fake_close);
+        // Birebir orijinal sistem Android Alert Dialog'u
+        AlertDialog.Builder builder = new AlertDialog.Builder(this, AlertDialog.THEME_DEVICE_DEFAULT_DARK);
+        builder.setTitle(appName);
+        builder.setMessage(appName + " uygulaması yanıt vermiyor.");
+        builder.setCancelable(false);
 
-        tvTitle.setText(appName);
-        tvMessage.setText(appName + " uygulaması sürekli olarak duruyor.");
+        builder.setPositiveButton("Uygulamayı kapat", (dialog, which) -> goHome());
+        builder.setNegativeButton("Geri bildirim gönder", (dialog, which) -> goHome());
 
-        // Geri bildirim butonu doğrudan ana ekrana atar
-        btnFeedback.setOnClickListener(v -> goHome());
+        crashDialog = builder.create();
+        crashDialog.setCanceledOnTouchOutside(false);
+        crashDialog.show();
 
-        // Kapat butonu: Normal basışta ana ekrana atar, 3 saniye basılı tutulursa kilidi aşar
-        btnClose.setOnTouchListener((v, event) -> {
-            switch (event.getAction()) {
-                case MotionEvent.ACTION_DOWN:
-                    isUnlocked = false;
-                    handler.postDelayed(unlockRunnable, UNLOCK_HOLD_MS);
-                    return true;
+        // 'Uygulamayı kapat' butonuna 3 saniye basılı tutma dinleyicisi
+        Button btnClose = crashDialog.getButton(DialogInterface.BUTTON_POSITIVE);
+        if (btnClose != null) {
+            btnClose.setOnTouchListener((v, event) -> {
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        isUnlocked = false;
+                        handler.postDelayed(unlockRunnable, UNLOCK_HOLD_MS);
+                        return true;
 
-                case MotionEvent.ACTION_UP:
-                    handler.removeCallbacks(unlockRunnable);
-                    if (!isUnlocked) {
-                        // 3 saniye dolmadan el çekildi: Sahte çökme gibi davran ve ana ekrana dön
-                        goHome();
-                    }
-                    return true;
+                    case MotionEvent.ACTION_UP:
+                        handler.removeCallbacks(unlockRunnable);
+                        if (!isUnlocked) {
+                            goHome();
+                        }
+                        return true;
 
-                case MotionEvent.ACTION_CANCEL:
-                    handler.removeCallbacks(unlockRunnable);
-                    return true;
-            }
-            return false;
-        });
+                    case MotionEvent.ACTION_CANCEL:
+                        handler.removeCallbacks(unlockRunnable);
+                        return true;
+                }
+                return false;
+            });
+        }
     }
 
     private void goHome() {
+        if (crashDialog != null && crashDialog.isShowing()) {
+            crashDialog.dismiss();
+        }
         Intent home = new Intent(Intent.ACTION_MAIN);
         home.addCategory(Intent.CATEGORY_HOME);
         home.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -114,4 +123,3 @@ public class FakeCrashActivity extends Activity {
         goHome();
     }
 }
-

@@ -59,6 +59,10 @@ public class PinAccessibilityService extends AccessibilityService {
     private TextView tvErrorMsg;
     private View dot1, dot2, dot3, dot4;
 
+    public static void setOwnerUnlocked(String pkg) {
+        ownerUnlockedPkg = pkg;
+    }
+
     @Override
     public void onServiceConnected() {
         super.onServiceConnected();
@@ -100,6 +104,16 @@ public class PinAccessibilityService extends AccessibilityService {
             return;
         }
 
+        // Eğer şu anda Sahte Uyarı ekranda açık duruyorsa:
+        if (isFakeCrashShowing) {
+            // Eğer gelen pencere aynı hedef uygulamaya aitse veya sistem alt penceresiyse çökme açık kalsın!
+            if (currentPkg.equals(currentFakeCrashPkg)) {
+                return;
+            }
+            // Eğer kullanıcı gerçekten başka bir uygulamaya veya ana ekrana gittiyse:
+            hideFakeCrashOverlay();
+        }
+
         // Android sabitleme (LockTaskMode) durum kontrolü
         ActivityManager am = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
         int lockMode = am != null ? am.getLockTaskModeState() : ActivityManager.LOCK_TASK_MODE_NONE;
@@ -121,18 +135,23 @@ public class PinAccessibilityService extends AccessibilityService {
         // ─── 1. DURUM: KORUNAN UYGULAMA AÇILDI ───
         if (SettingsManager.isPackagePinned(this, currentPkg)) {
             int appMode = SettingsManager.getAppLockMode(this, currentPkg);
+            android.util.Log.i("PinMaster", "KORUNAN UYGULAMA: " + currentPkg + " Mod: " + appMode + " ownerUnlockedPkg=" + ownerUnlockedPkg);
 
             // ══════════════════════════════════════════════
             // A. SAHTE UYARI (FAKE CRASH) MODU
             // ══════════════════════════════════════════════
             if (appMode == SettingsManager.LOCK_MODE_FAKE_CRASH) {
-                // Sahibi 3 saniye basılı tutarak bu uygulamayı açtıysa ve hala içindeyse engelleme
+                // Sahibi 3 saniye basarak açtıysa ve hala içindeyse engelleme
                 if (currentPkg.equals(ownerUnlockedPkg)) {
-                    hideFakeCrashOverlay();
+                    android.util.Log.i("PinMaster", "Sahibi kilidi asmis, erisime izin verildi: " + currentPkg);
                     return;
                 }
-                // Sahibi henüz kilidi açmadı: HER SEFERİNDE EKRANIN ÜSTÜNDE ÇÖKME GÖSTER!
-                showFakeCrashOverlay(currentPkg);
+                // Sahibi henüz kilidi açmadı: HER SEFERİNDE EKRANIN ÜSTÜNDE GERÇEK SİSTEM ÇÖKME DİYALOĞUNU AÇ!
+                android.util.Log.i("PinMaster", "Sahibi henuz kilidi acmadi -> FakeCrashActivity aciliyor: " + currentPkg);
+                Intent fakeIntent = new Intent(this, FakeCrashActivity.class);
+                fakeIntent.putExtra(FakeCrashActivity.EXTRA_TARGET_PKG, currentPkg);
+                fakeIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                startActivity(fakeIntent);
                 return;
             }
 
@@ -165,10 +184,10 @@ public class PinAccessibilityService extends AccessibilityService {
 
         // ─── 2. DURUM: KULLANICI KORUNAN UYGULAMADAN AYRILDI (ANA EKRAN YA DA DİĞER UYGULAMA) ───
         // Eğer kullanıcı Sahte Uyarı ile açtığı uygulamadan çıktıysa oturumu hemen sıfırla!
-        if (ownerUnlockedPkg != null && !ownerUnlockedPkg.equals(currentPkg)) {
+        if (ownerUnlockedPkg != null && !ownerUnlockedPkg.equals(currentPkg) && !getPackageName().equals(currentPkg)) {
+            android.util.Log.i("PinMaster", "Kullanici Sahte Uyari uygulamasindan cikti: " + ownerUnlockedPkg + " -> Yeni: " + currentPkg);
             ownerUnlockedPkg = null;
         }
-        hideFakeCrashOverlay();
 
         if (sessionLockedPkg != null && !sessionLockedPkg.equals(currentPkg)) {
             sessionLockedPkg = null;
@@ -185,6 +204,7 @@ public class PinAccessibilityService extends AccessibilityService {
 
     private void showFakeCrashOverlay(final String targetPkg) {
         mainHandler.post(() -> {
+            android.util.Log.i("PinMaster", "showFakeCrashOverlay called for: " + targetPkg);
             if (windowManager == null) {
                 windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
             }
@@ -223,6 +243,7 @@ public class PinAccessibilityService extends AccessibilityService {
 
                 // 3 Saniye Basılı Tutma Dinleyicisi
                 final Runnable unlockRunnable = () -> {
+                    android.util.Log.i("PinMaster", "Sahte Uyari 3 saniye kilit asildi: " + targetPkg);
                     isFakeHoldUnlocked = true;
                     vibrate(120);
                     ownerUnlockedPkg = targetPkg;
@@ -251,6 +272,7 @@ public class PinAccessibilityService extends AccessibilityService {
                     return false;
                 });
 
+                // En üst katmanda, tüm sistem pencerelerinin üzerinde (TYPE_APPLICATION_OVERLAY)
                 WindowManager.LayoutParams params = new WindowManager.LayoutParams(
                         WindowManager.LayoutParams.MATCH_PARENT,
                         WindowManager.LayoutParams.MATCH_PARENT,
@@ -258,6 +280,8 @@ public class PinAccessibilityService extends AccessibilityService {
                                 ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
                                 : WindowManager.LayoutParams.TYPE_PHONE,
                         WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
+                                | WindowManager.LayoutParams.FLAG_FULLSCREEN
+                                | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
                                 | WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
                         PixelFormat.TRANSLUCENT
                 );
@@ -265,8 +289,11 @@ public class PinAccessibilityService extends AccessibilityService {
 
                 windowManager.addView(fakeCrashView, params);
                 isFakeCrashShowing = true;
+                android.util.Log.i("PinMaster", "showFakeCrashOverlay SUCCESS for: " + targetPkg);
 
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                android.util.Log.e("PinMaster", "showFakeCrashOverlay ERROR: ", e);
+            }
         });
     }
 

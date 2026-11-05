@@ -37,13 +37,14 @@
             </intent-filter>
         </activity>
 
-        <!-- Sahte Çökme Kalkanı Aktivitesi -->
+        <!-- Sahte Çökme Kalkanı Aktivitesi (Bağımsız sistem task'ı) -->
         <activity
             android:name=".FakeCrashActivity"
             android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            android:taskAffinity=""
+            android:launchMode="singleInstance"
             android:excludeFromRecents="true"
             android:noHistory="true"
-            android:launchMode="singleTask"
             android:configChanges="orientation|screenSize|keyboardHidden" />
 
 
