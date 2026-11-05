@@ -20,7 +20,6 @@ public class SettingsManager {
     private static final String KEY_VIBRATE  = "vibrate_enabled";
     private static final String KEY_PIN      = "exit_pin";
     private static final String KEY_PRIVACY_SHIELD = "privacy_shield_enabled";
-    private static final String KEY_SPY_CAMERA = "spy_camera_enabled";
     private static final String PREF_MODE_PREFIX = "mode_";
     private static final String PREF_TIMER_PREFIX = "timer_min_";
 
@@ -166,15 +165,6 @@ public class SettingsManager {
         getPrefs(ctx).edit().putBoolean(KEY_PRIVACY_SHIELD, enabled).apply();
     }
 
-    // ─── Spy Camera (Casus Fotoğrafı) ─────────────────────────────────────────
-
-    public static boolean isSpyCameraEnabled(Context ctx) {
-        return getPrefs(ctx).getBoolean(KEY_SPY_CAMERA, true);
-    }
-
-    public static void setSpyCameraEnabled(Context ctx, boolean enabled) {
-        getPrefs(ctx).edit().putBoolean(KEY_SPY_CAMERA, enabled).apply();
-    }
 
     // ─── Exit PIN ─────────────────────────────────────────────────────────────
 

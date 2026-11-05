@@ -76,24 +76,10 @@ while true; do
 
             # 1. Detect hardware unpin: was pinned before, but now NONE
             if [ -n "$LAST_PINNED_PKG" ] && [ "$IS_LOCKED" -eq 0 ]; then
-                COOLDOWN_SEC=10
-                if [ -f "/data/local/tmp/cooldown.txt" ]; then
-                    READ_CD=$(cat /data/local/tmp/cooldown.txt 2>/dev/null)
-                    if [ -n "$READ_CD" ] && [ "$READ_CD" -gt 0 ] 2>/dev/null; then
-                        COOLDOWN_SEC="$READ_CD"
-                    fi
-                elif [ -f "/storage/emulated/0/Android/data/com.pinmaster.app/files/cooldown.txt" ]; then
-                    READ_CD=$(cat "/storage/emulated/0/Android/data/com.pinmaster.app/files/cooldown.txt" 2>/dev/null)
-                    if [ -n "$READ_CD" ] && [ "$READ_CD" -gt 0 ] 2>/dev/null; then
-                        COOLDOWN_SEC="$READ_CD"
-                    fi
-                fi
-                echo "Hardware unpin detected for $LAST_PINNED_PKG (task $CURRENT_LOCKED_TASK)! Navigating to HOME and setting ${COOLDOWN_SEC}s cooldown." >> "$LOG_FILE"
+                echo "Hardware unpin detected for $LAST_PINNED_PKG (task $CURRENT_LOCKED_TASK)! Setting unpin status until user leaves app." >> "$LOG_FILE"
                 UNPIN_COOLDOWN_PKG="$LAST_PINNED_PKG"
-                UNPIN_COOLDOWN_EXPIRE=$((NOW + COOLDOWN_SEC))
                 LAST_PINNED_PKG=""
                 CURRENT_LOCKED_TASK=""
-                input keyevent KEYCODE_HOME
                 sleep 0.5
                 continue
             fi
@@ -104,13 +90,14 @@ while true; do
                 CURRENT_LOCKED_TASK="$TASK"
             fi
 
-            # 3. Check cooldown expiration
+            # 3. Check unpin status
             if [ -n "$UNPIN_COOLDOWN_PKG" ]; then
-                if [ "$NOW" -ge "$UNPIN_COOLDOWN_EXPIRE" ]; then
+                if [ "$PKG" != "$UNPIN_COOLDOWN_PKG" ]; then
+                    # User switched away or closed the app! Reset unpin state.
                     UNPIN_COOLDOWN_PKG=""
-                elif [ "$PKG" = "$UNPIN_COOLDOWN_PKG" ]; then
-                    # Still in cooldown, do not touch!
-                    sleep 0.3
+                else
+                    # User is still inside the unpinned app, do not re-lock!
+                    sleep 0.5
                     continue
                 fi
             fi

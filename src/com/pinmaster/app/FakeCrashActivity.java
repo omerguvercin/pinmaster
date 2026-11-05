@@ -108,9 +108,6 @@ public class FakeCrashActivity extends Activity {
     }
 
     private void goHome() {
-        if (targetPkg != null && SettingsManager.isSpyCameraEnabled(this)) {
-            IntruderManager.captureSilentPhoto(this, targetPkg, "Sahte Uyarı İhlali");
-        }
         if (crashDialog != null && crashDialog.isShowing()) {
             crashDialog.dismiss();
         }

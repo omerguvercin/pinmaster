@@ -141,19 +141,16 @@ public class PinAccessibilityService extends AccessibilityService {
         int lockMode = am != null ? am.getLockTaskModeState() : ActivityManager.LOCK_TASK_MODE_NONE;
         boolean isCurrentlyLocked = (lockMode == ActivityManager.LOCK_TASK_MODE_PINNED || lockMode == ActivityManager.LOCK_TASK_MODE_LOCKED);
 
-        // Kullanıcı donanım tuşlarına basarak sabitlemeyi kaldırdıysa:
+        // Kullanıcı donanım tuşlarına basarak sabitlemeyi kaldırdıysa (Sahip kilit çözdü):
         if (wasLockTaskActive && !isCurrentlyLocked) {
             cancelActiveTimer();
             ShizukuHelper.setPrivacyShield(false);
             if (activeGuardedPkg != null) {
-                // İzinsiz çıkış denemesi: Casus fotoğrafı çek
-                if (SettingsManager.isSpyCameraEnabled(this)) {
-                    IntruderManager.captureSilentPhoto(this, activeGuardedPkg, "Kilit Çözme Girişimi");
-                }
                 unpinnedPkg = activeGuardedPkg;
-                long cooldownMs = SettingsManager.getCooldownSeconds(this) * 1000L;
-                unpinnedUntil = System.currentTimeMillis() + cooldownMs;
-                performGlobalAction(GLOBAL_ACTION_HOME);
+                unpinnedUntil = Long.MAX_VALUE; // Kullanıcı bu uygulamadan ayrılana kadar serbest
+                activeGuardedPkg = null;
+                sessionLockedPkg = null;
+                isInsideProtectedApp = false;
             }
         }
         wasLockTaskActive = isCurrentlyLocked;
@@ -276,14 +273,21 @@ public class PinAccessibilityService extends AccessibilityService {
                 android.util.Log.i("PinMaster", "Ana ekrana donuldu, sayac temizleniyor: " + activeTimerPkg);
                 cancelActiveTimer();
             }
+            unpinnedPkg = null;
+            unpinnedUntil = 0;
+            sessionLockedPkg = null;
+            activeGuardedPkg = null;
+            isInsideProtectedApp = false;
             ShizukuHelper.setPrivacyShield(false);
+        }
+
+        if (unpinnedPkg != null && !unpinnedPkg.equals(currentPkg)) {
+            unpinnedPkg = null;
+            unpinnedUntil = 0;
         }
 
         if (sessionLockedPkg != null && !sessionLockedPkg.equals(currentPkg)) {
             sessionLockedPkg = null;
-            if (now >= unpinnedUntil) {
-                unpinnedPkg = null;
-            }
             isInsideProtectedApp = false;
             activeGuardedPkg = null;
             ShizukuHelper.setPrivacyShield(false);

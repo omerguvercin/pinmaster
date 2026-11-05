@@ -50,10 +50,7 @@ public class MainActivity extends Activity {
     // Ayarlar sekmesi
     private Switch switchVibrate;
     private Switch switchPrivacyShield;
-    private Switch switchSpyCamera;
-    private Button btnOpenSecurityLog;
     private TextView tvCurrentCooldown;
-    private static final int REQUEST_CODE_CAMERA = 1002;
     private Button btnChangeCooldown;
     private Button btnAccessibility;
     private Button btnBatteryOptimization;
@@ -101,19 +98,6 @@ public class MainActivity extends Activity {
         SettingsManager.applyLockTaskPackages(this);
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == REQUEST_CODE_CAMERA) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                SettingsManager.setSpyCameraEnabled(this, true);
-                if (switchSpyCamera != null) switchSpyCamera.setChecked(true);
-            } else {
-                SettingsManager.setSpyCameraEnabled(this, false);
-                if (switchSpyCamera != null) switchSpyCamera.setChecked(false);
-            }
-        }
-    }
 
     // ─── Init ─────────────────────────────────────────────────────────────────
 
@@ -184,8 +168,6 @@ public class MainActivity extends Activity {
 
         switchVibrate          = findViewById(R.id.switch_vibrate);
         switchPrivacyShield    = findViewById(R.id.switch_privacy_shield);
-        switchSpyCamera        = findViewById(R.id.switch_spy_camera);
-        btnOpenSecurityLog     = findViewById(R.id.btn_open_security_log);
         tvCurrentCooldown      = findViewById(R.id.tv_current_cooldown);
         btnChangeCooldown      = findViewById(R.id.btn_change_cooldown);
         btnAccessibility       = findViewById(R.id.btn_open_accessibility);
@@ -316,26 +298,6 @@ public class MainActivity extends Activity {
             switchPrivacyShield.setChecked(SettingsManager.isPrivacyShieldEnabled(this));
             switchPrivacyShield.setOnCheckedChangeListener((btn, checked) ->
                     SettingsManager.setPrivacyShieldEnabled(MainActivity.this, checked));
-        }
-
-        if (switchSpyCamera != null) {
-            switchSpyCamera.setChecked(SettingsManager.isSpyCameraEnabled(this));
-            switchSpyCamera.setOnCheckedChangeListener((btn, checked) -> {
-                if (checked) {
-                    if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-                        requestPermissions(new String[]{Manifest.permission.CAMERA}, REQUEST_CODE_CAMERA);
-                    } else {
-                        SettingsManager.setSpyCameraEnabled(MainActivity.this, true);
-                    }
-                } else {
-                    SettingsManager.setSpyCameraEnabled(MainActivity.this, false);
-                }
-            });
-        }
-
-        if (btnOpenSecurityLog != null) {
-            btnOpenSecurityLog.setOnClickListener(v ->
-                    startActivity(new Intent(MainActivity.this, SecurityLogActivity.class)));
         }
 
         refreshCooldownDisplay();
