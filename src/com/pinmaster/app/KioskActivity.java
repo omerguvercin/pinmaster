@@ -15,6 +15,7 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
@@ -33,6 +34,7 @@ public class KioskActivity extends Activity {
     private final Handler handler = new Handler(Looper.getMainLooper());
     private boolean isExitUnlocked = false;
     private static final long HOLD_DURATION_MS = 1500; // 1.5 saniye
+    private List<KioskItem> kioskItems = new ArrayList<>();
 
     private final Runnable exitRunnable = new Runnable() {
         @Override
@@ -55,29 +57,33 @@ public class KioskActivity extends Activity {
         setupExitTrigger();
         loadKioskApps();
 
-        // Vitrin modunu aktif olarak işaretle
+        // Vitrin modunu aktif yap
         SettingsManager.setKioskActive(this, true);
 
-        // Mahremiyet Kalkanı
         if (SettingsManager.isPrivacyShieldEnabled(this)) {
             ShizukuHelper.setPrivacyShield(true);
         }
 
-        // Sabitleme
-        if (ShizukuHelper.hasPermission()) {
-            ShizukuHelper.lockTopApp(getPackageName());
-        }
+        // Vitrin ekranını sabitle
+        handler.postDelayed(() -> {
+            if (SettingsManager.isKioskActive(this) && ShizukuHelper.hasPermission()) {
+                ShizukuHelper.lockTopApp(getPackageName());
+            }
+        }, 300);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        SettingsManager.setKioskActive(this, true);
-        if (SettingsManager.isPrivacyShieldEnabled(this)) {
-            ShizukuHelper.setPrivacyShield(true);
-        }
-        if (ShizukuHelper.hasPermission()) {
-            ShizukuHelper.lockTopApp(getPackageName());
+        if (SettingsManager.isKioskActive(this)) {
+            if (SettingsManager.isPrivacyShieldEnabled(this)) {
+                ShizukuHelper.setPrivacyShield(true);
+            }
+            handler.postDelayed(() -> {
+                if (SettingsManager.isKioskActive(this) && ShizukuHelper.hasPermission()) {
+                    ShizukuHelper.lockTopApp(getPackageName());
+                }
+            }, 300);
         }
     }
 
@@ -106,7 +112,7 @@ public class KioskActivity extends Activity {
     private void loadKioskApps() {
         PackageManager pm = getPackageManager();
         Set<String> kioskPkgs = SettingsManager.getKioskPackages(this);
-        List<KioskItem> items = new ArrayList<>();
+        kioskItems.clear();
 
         for (String pkg : kioskPkgs) {
             try {
@@ -118,17 +124,48 @@ public class KioskActivity extends Activity {
                 String label = pm.getApplicationLabel(info).toString();
                 Drawable icon = pm.getApplicationIcon(info);
 
-                items.add(new KioskItem(label, pkg, icon, launchIntent));
+                kioskItems.add(new KioskItem(label, pkg, icon, launchIntent));
             } catch (Exception ignored) {}
         }
 
-        if (items.isEmpty()) {
+        if (kioskItems.isEmpty()) {
             tvEmpty.setVisibility(View.VISIBLE);
             gridView.setVisibility(View.GONE);
         } else {
             tvEmpty.setVisibility(View.GONE);
             gridView.setVisibility(View.VISIBLE);
-            gridView.setAdapter(new KioskAdapter(this, items));
+            KioskAdapter adapter = new KioskAdapter(this, kioskItems);
+            gridView.setAdapter(adapter);
+
+            gridView.setOnItemClickListener((parent, view, position, id) -> {
+                if (position >= 0 && position < kioskItems.size()) {
+                    launchKioskApp(kioskItems.get(position));
+                }
+            });
+        }
+    }
+
+    private void launchKioskApp(final KioskItem item) {
+        if (item == null || item.launchIntent == null) return;
+
+        // 1. Yeni uygulama penceresi açılabilmesi için mevcut sabitlemeyi kaldır
+        if (ShizukuHelper.hasPermission()) {
+            ShizukuHelper.unlockTask();
+        }
+
+        // 2. Hedef uygulamayı başlat
+        try {
+            item.launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            startActivity(item.launchIntent);
+
+            // 3. Hedef uygulama ekrana geldiğinde onu sabitle
+            handler.postDelayed(() -> {
+                if (SettingsManager.isKioskActive(KioskActivity.this) && ShizukuHelper.hasPermission()) {
+                    ShizukuHelper.lockTopApp(item.pkg);
+                }
+            }, 600);
+        } catch (Exception e) {
+            Toast.makeText(this, "Uygulama açılamadı", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -138,9 +175,6 @@ public class KioskActivity extends Activity {
         if (ShizukuHelper.hasPermission()) {
             ShizukuHelper.unlockTask();
         }
-        try {
-            stopLockTask();
-        } catch (Exception ignored) {}
 
         Toast.makeText(this, "Vitrin Modu Kapatıldı", Toast.LENGTH_SHORT).show();
 
@@ -185,7 +219,7 @@ public class KioskActivity extends Activity {
         }
     }
 
-    private class KioskAdapter extends BaseAdapter {
+    private static class KioskAdapter extends BaseAdapter {
         private final Context context;
         private final List<KioskItem> list;
 
@@ -210,15 +244,6 @@ public class KioskActivity extends Activity {
 
             ivIcon.setImageDrawable(item.icon);
             tvName.setText(item.name);
-
-            convertView.setOnClickListener(v -> {
-                try {
-                    item.launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    context.startActivity(item.launchIntent);
-                } catch (Exception e) {
-                    Toast.makeText(context, "Uygulama açılamadı", Toast.LENGTH_SHORT).show();
-                }
-            });
 
             return convertView;
         }
