@@ -93,6 +93,10 @@
             android:id="@+id/app_switch"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:track="@drawable/switch_track"
+            android:thumb="@drawable/switch_thumb"
+            android:splitTrack="false"
+            android:showText="false"
             android:focusable="false"
             android:clickable="true" />
 

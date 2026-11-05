@@ -45,7 +45,11 @@
         <Switch
             android:id="@+id/switch_master"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content"
+            android:track="@drawable/switch_track"
+            android:thumb="@drawable/switch_thumb"
+            android:splitTrack="false"
+            android:showText="false"/>
     </LinearLayout>
 
     <!-- ══════════════════════════════════════════════
@@ -289,7 +293,11 @@
                     <Switch
                         android:id="@+id/switch_vibrate"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"/>
+                        android:layout_height="wrap_content"
+                        android:track="@drawable/switch_track"
+                        android:thumb="@drawable/switch_thumb"
+                        android:splitTrack="false"
+                        android:showText="false"/>
                 </LinearLayout>
 
                 <!-- Mahremiyet Kalkanı -->
@@ -327,7 +335,11 @@
                     <Switch
                         android:id="@+id/switch_privacy_shield"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"/>
+                        android:layout_height="wrap_content"
+                        android:track="@drawable/switch_track"
+                        android:thumb="@drawable/switch_thumb"
+                        android:splitTrack="false"
+                        android:showText="false"/>
                 </LinearLayout>
 
 
