@@ -577,52 +577,153 @@
                 android:orientation="vertical"
                 android:padding="16dp">
 
-                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:orientation="vertical" android:background="@drawable/card_bg"
-                    android:padding="16dp" android:layout_marginBottom="10dp">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:text="1. Erişilebilirliği Etkinleştir"
-                        android:textColor="@color/accent_cyan" android:textSize="14sp" android:textStyle="bold"/>
-                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                <!-- 1. Kurulum -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:background="@drawable/card_bg"
+                    android:padding="16dp"
+                    android:layout_marginBottom="10dp">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="1. Temel Kurulum ve Yetkiler"
+                        android:textColor="@color/accent_cyan"
+                        android:textSize="14sp"
+                        android:textStyle="bold"/>
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:text="Ayarlar > Erişilebilirlik > PinMaster'ı açın. Uygulama her açılışta otomatik çalışır."
-                        android:textColor="@color/text_secondary" android:textSize="13sp"/>
+                        android:text="Ayarlar > Erişilebilirlik menüsünden PinMaster'ı açın. Rootsuz yerel kilit desteği için Shizuku uygulamasını kablosuz hata ayıklama ile başlatıp PinMaster'a yetki verin."
+                        android:textColor="@color/text_secondary"
+                        android:textSize="13sp"
+                        android:lineSpacingExtra="2dp"/>
                 </LinearLayout>
 
-                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:orientation="vertical" android:background="@drawable/card_bg"
-                    android:padding="16dp" android:layout_marginBottom="10dp">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:text="2. Uygulama Seç"
-                        android:textColor="@color/accent_cyan" android:textSize="14sp" android:textStyle="bold"/>
-                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                <!-- 2. Sabit Kilit -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:background="@drawable/card_bg"
+                    android:padding="16dp"
+                    android:layout_marginBottom="10dp">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="2. Sabit Kilit Modu"
+                        android:textColor="@color/accent_cyan"
+                        android:textSize="14sp"
+                        android:textStyle="bold"/>
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:text="'Uygulamalar' sekmesinden kilitlemek istediğiniz uygulamaları seçin."
-                        android:textColor="@color/text_secondary" android:textSize="13sp"/>
+                        android:text="Uygulamalar sekmesinden seçim yaptığınızda varsayılan olarak Sabit Kilit aktifleşir. Uygulama açıldığı anda ekrana kilitlenir; diğer uygulamalara veya ana ekrana geçilemez."
+                        android:textColor="@color/text_secondary"
+                        android:textSize="13sp"
+                        android:lineSpacingExtra="2dp"/>
                 </LinearLayout>
 
-                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:orientation="vertical" android:background="@drawable/card_bg"
-                    android:padding="16dp" android:layout_marginBottom="10dp">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:text="3. Shizuku'yu Başlatın"
-                        android:textColor="@color/accent_cyan" android:textSize="14sp" android:textStyle="bold"/>
-                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                <!-- 3. Sayaçlı Kilit -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:background="@drawable/card_bg"
+                    android:padding="16dp"
+                    android:layout_marginBottom="10dp">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="3. Otomatik Kilit Sayacı"
+                        android:textColor="@color/accent_cyan"
+                        android:textSize="14sp"
+                        android:textStyle="bold"/>
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:text="Shizuku uygulamasını yükleyin ve Kablosuz Hata Ayıklama (Wireless Debugging) ile bir kere başlatın. Ardından PinMaster'a izin verin."
-                        android:textColor="@color/text_secondary" android:textSize="13sp"/>
+                        android:text="Seçili uygulamanın yanındaki kilit rozetine dokunarak 1, 5, 15, 30 veya 60 dakikalık kullanım süresi belirleyebilirsiniz. Süre dolduğunda cihaz çift titrer ve ekran otomatik kilitlenir."
+                        android:textColor="@color/text_secondary"
+                        android:textSize="13sp"
+                        android:lineSpacingExtra="2dp"/>
                 </LinearLayout>
 
-                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:orientation="vertical" android:background="@drawable/card_bg"
+                <!-- 4. Sahte Uyarı -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:background="@drawable/card_bg"
+                    android:padding="16dp"
+                    android:layout_marginBottom="10dp">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="4. Sahte Uyarı Modu"
+                        android:textColor="@color/accent_cyan"
+                        android:textSize="14sp"
+                        android:textStyle="bold"/>
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="Kilit rozetine dokunup modu Sahte Uyarı yaptığınızda uygulama açılışında çökme uyarısı verilir. Uygulamayı kullanmak için 'Uygulamayı kapat' butonuna 1.5 saniye basılı tutulur."
+                        android:textColor="@color/text_secondary"
+                        android:textSize="13sp"
+                        android:lineSpacingExtra="2dp"/>
+                </LinearLayout>
+
+                <!-- 5. Mahremiyet Kalkanı -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:background="@drawable/card_bg"
+                    android:padding="16dp"
+                    android:layout_marginBottom="10dp">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="5. Mahremiyet Kalkanı"
+                        android:textColor="@color/accent_cyan"
+                        android:textSize="14sp"
+                        android:textStyle="bold"/>
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="Ayarlar sekmesinden Mahremiyet Kalkanı açıldığında kilitli uygulamalarda üst bildirim çekmecesinin indirilmesi ve durum çubuğu bildirim balonları engellenir."
+                        android:textColor="@color/text_secondary"
+                        android:textSize="13sp"
+                        android:lineSpacingExtra="2dp"/>
+                </LinearLayout>
+
+                <!-- 6. Kilit Çözme -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:background="@drawable/card_bg"
                     android:padding="16dp">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:text="4. Kilit Nasıl Kaldırılır?"
-                        android:textColor="@color/accent_cyan" android:textSize="14sp" android:textStyle="bold"/>
-                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="6. Kilit Çözme ve Çıkış"
+                        android:textColor="@color/accent_cyan"
+                        android:textSize="14sp"
+                        android:textStyle="bold"/>
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:text="Kilitli uygulamadan çıkmak için telefonunuzun Geri ve Son Uygulamalar tuşlarına aynı anda basılı tutun (jestlerde alttan kaydırıp tutun).\n\nKilit kalktığında uygulama serbest kalır; uygulamayı kapatabilir veya ana ekrana dönebilirsiniz."
-                        android:textColor="@color/text_secondary" android:textSize="13sp"/>
+                        android:text="Donanım tuşlarıyla (Geri ve Son Uygulamalar tuşlarına aynı anda basarak) kilidi açtığınızda uygulama serbest kalır. Kullanıcı uygulamayı tamamen kapatana kadar tekrar kilitlenmez."
+                        android:textColor="@color/text_secondary"
+                        android:textSize="13sp"
+                        android:lineSpacingExtra="2dp"/>
                 </LinearLayout>
 
             </LinearLayout>
