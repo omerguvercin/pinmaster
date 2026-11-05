@@ -26,6 +26,7 @@ import android.view.accessibility.AccessibilityEvent;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import java.lang.reflect.Method;
 
 public class PinAccessibilityService extends AccessibilityService {
 
@@ -86,6 +87,15 @@ public class PinAccessibilityService extends AccessibilityService {
         if (pkgSeq == null) return;
         String currentPkg = pkgSeq.toString();
 
+        // Mahremiyet Kalkanı: Kilitli uygulama açıkken SystemUI (bildirim çekmecesi) açılırsa hemen kapat
+        if ("com.android.systemui".equals(currentPkg)) {
+            if (isInsideProtectedApp && SettingsManager.isPrivacyShieldEnabled(this)) {
+                collapseStatusBarPanels();
+                ShizukuHelper.setPrivacyShield(true);
+            }
+            return;
+        }
+
         // Kendi uygulamamız veya sistem iç süreçleri yoksay
         if (isSystemOrOverlayExempt(currentPkg)) {
             return;
@@ -94,6 +104,7 @@ public class PinAccessibilityService extends AccessibilityService {
         // Ana anahtar kapalıysa korumayı sıfırla
         if (!SettingsManager.isMasterEnabled(this)) {
             cancelActiveTimer();
+            ShizukuHelper.setPrivacyShield(false);
             isInsideProtectedApp = false;
             activeGuardedPkg = null;
             sessionLockedPkg = null;
@@ -128,6 +139,7 @@ public class PinAccessibilityService extends AccessibilityService {
         // Kullanıcı donanım tuşlarına basarak sabitlemeyi kaldırdıysa:
         if (wasLockTaskActive && !isCurrentlyLocked) {
             cancelActiveTimer();
+            ShizukuHelper.setPrivacyShield(false);
             if (activeGuardedPkg != null) {
                 unpinnedPkg = activeGuardedPkg;
                 long cooldownMs = SettingsManager.getCooldownSeconds(this) * 1000L;
@@ -149,6 +161,7 @@ public class PinAccessibilityService extends AccessibilityService {
             // ══════════════════════════════════════════════
             if (appMode == SettingsManager.LOCK_MODE_FAKE_CRASH) {
                 cancelActiveTimer();
+                ShizukuHelper.setPrivacyShield(false);
                 // Sahibi 1.5 saniye basarak açtıysa ve hala içindeyse engelleme
                 if (currentPkg.equals(ownerUnlockedPkg)) {
                     android.util.Log.i("PinMaster", "Sahibi kilidi asmis, erisime izin verildi: " + currentPkg);
@@ -186,6 +199,7 @@ public class PinAccessibilityService extends AccessibilityService {
                     activeTimerRunnable = () -> {
                         android.util.Log.i("PinMaster", "Sayac doldu! Uygulama: " + timerPkg + " -> Sabitleme kaldirilip ekran kilitleniyor.");
                         vibrateDouble();
+                        ShizukuHelper.setPrivacyShield(false);
                         if (ShizukuHelper.hasPermission()) {
                             ShizukuHelper.unlockTask();
                         }
@@ -204,6 +218,11 @@ public class PinAccessibilityService extends AccessibilityService {
                 activeGuardedPkg = currentPkg;
                 sessionLockedPkg = currentPkg;
                 hideOverlay();
+
+                // Mahremiyet Kalkanı Aktifleştir
+                if (SettingsManager.isPrivacyShieldEnabled(this)) {
+                    ShizukuHelper.setPrivacyShield(true);
+                }
 
                 // Shizuku aktifse doğrudan işletim sistemi seviyesinde sabitle (App Pinning)
                 if (ShizukuHelper.hasPermission()) {
@@ -233,6 +252,11 @@ public class PinAccessibilityService extends AccessibilityService {
             sessionLockedPkg = currentPkg;
             hideOverlay();
 
+            // Mahremiyet Kalkanı Aktifleştir
+            if (SettingsManager.isPrivacyShieldEnabled(this)) {
+                ShizukuHelper.setPrivacyShield(true);
+            }
+
             // Shizuku aktifse doğrudan işletim sistemi seviyesinde sabitle (App Pinning)
             if (ShizukuHelper.hasPermission()) {
                 ShizukuHelper.lockTopApp(currentPkg);
@@ -260,6 +284,7 @@ public class PinAccessibilityService extends AccessibilityService {
             }
             isInsideProtectedApp = false;
             activeGuardedPkg = null;
+            ShizukuHelper.setPrivacyShield(false);
         }
         hideOverlay();
     }
@@ -649,6 +674,15 @@ public class PinAccessibilityService extends AccessibilityService {
         } catch (Exception ignored) {}
     }
 
+    private void collapseStatusBarPanels() {
+        try {
+            Object statusBarService = getSystemService("statusbar");
+            Class<?> statusBarManager = Class.forName("android.app.StatusBarManager");
+            Method collapse = statusBarManager.getMethod("collapsePanels");
+            collapse.invoke(statusBarService);
+        } catch (Exception ignored) {}
+    }
+
     private void cancelActiveTimer() {
         if (activeTimerRunnable != null) {
             timerLockHandler.removeCallbacks(activeTimerRunnable);
@@ -660,6 +694,7 @@ public class PinAccessibilityService extends AccessibilityService {
     @Override
     public void onInterrupt() {
         cancelActiveTimer();
+        ShizukuHelper.setPrivacyShield(false);
         isInsideProtectedApp = false;
         activeGuardedPkg = null;
         ownerUnlockedPkg = null;
@@ -671,6 +706,7 @@ public class PinAccessibilityService extends AccessibilityService {
     public void onDestroy() {
         super.onDestroy();
         cancelActiveTimer();
+        ShizukuHelper.setPrivacyShield(false);
         hideOverlay();
         hideFakeCrashOverlay();
     }

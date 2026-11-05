@@ -77,6 +77,15 @@ public class ShizukuHelper {
         return executeCommand("am task lock stop");
     }
 
+    public static void setPrivacyShield(boolean enable) {
+        if (!hasPermission()) return;
+        if (enable) {
+            executeCommand("cmd statusbar send-disable-flag notification-peek statusbar-expansion; cmd statusbar collapse");
+        } else {
+            executeCommand("cmd statusbar send-disable-flag none");
+        }
+    }
+
     public static void lockTopApp(final String expectedPkg) {
         if (!hasPermission()) return;
         new Thread(() -> {

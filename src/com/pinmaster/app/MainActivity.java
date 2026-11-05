@@ -48,6 +48,7 @@ public class MainActivity extends Activity {
 
     // Ayarlar sekmesi
     private Switch switchVibrate;
+    private Switch switchPrivacyShield;
     private TextView tvCurrentCooldown;
     private Button btnChangeCooldown;
     private Button btnAccessibility;
@@ -164,6 +165,7 @@ public class MainActivity extends Activity {
         listApps  = findViewById(R.id.list_apps);
 
         switchVibrate          = findViewById(R.id.switch_vibrate);
+        switchPrivacyShield    = findViewById(R.id.switch_privacy_shield);
         tvCurrentCooldown      = findViewById(R.id.tv_current_cooldown);
         btnChangeCooldown      = findViewById(R.id.btn_change_cooldown);
         btnAccessibility       = findViewById(R.id.btn_open_accessibility);
@@ -288,6 +290,12 @@ public class MainActivity extends Activity {
             switchVibrate.setChecked(SettingsManager.isVibrateEnabled(this));
             switchVibrate.setOnCheckedChangeListener((btn, checked) ->
                     SettingsManager.setVibrateEnabled(MainActivity.this, checked));
+        }
+
+        if (switchPrivacyShield != null) {
+            switchPrivacyShield.setChecked(SettingsManager.isPrivacyShieldEnabled(this));
+            switchPrivacyShield.setOnCheckedChangeListener((btn, checked) ->
+                    SettingsManager.setPrivacyShieldEnabled(MainActivity.this, checked));
         }
 
         refreshCooldownDisplay();

@@ -19,6 +19,7 @@ public class SettingsManager {
     private static final String KEY_MASTER   = "master_enabled";
     private static final String KEY_VIBRATE  = "vibrate_enabled";
     private static final String KEY_PIN      = "exit_pin";
+    private static final String KEY_PRIVACY_SHIELD = "privacy_shield_enabled";
     private static final String PREF_MODE_PREFIX = "mode_";
     private static final String PREF_TIMER_PREFIX = "timer_min_";
 
@@ -158,6 +159,16 @@ public class SettingsManager {
     public static void setVibrateEnabled(Context ctx, boolean enabled) {
         getPrefs(ctx).edit().putBoolean(KEY_VIBRATE, enabled).apply();
         syncTargetsToFile(ctx);
+    }
+
+    // ─── Privacy Shield (Mahremiyet Kalkanı) ──────────────────────────────────
+
+    public static boolean isPrivacyShieldEnabled(Context ctx) {
+        return getPrefs(ctx).getBoolean(KEY_PRIVACY_SHIELD, true);
+    }
+
+    public static void setPrivacyShieldEnabled(Context ctx, boolean enabled) {
+        getPrefs(ctx).edit().putBoolean(KEY_PRIVACY_SHIELD, enabled).apply();
     }
 
     // ─── Exit PIN ─────────────────────────────────────────────────────────────
