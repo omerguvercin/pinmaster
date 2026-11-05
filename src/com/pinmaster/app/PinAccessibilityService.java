@@ -8,7 +8,6 @@ import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.graphics.PixelFormat;
-import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
@@ -20,6 +19,7 @@ import android.view.ContextThemeWrapper;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.view.accessibility.AccessibilityEvent;
@@ -36,9 +36,16 @@ public class PinAccessibilityService extends AccessibilityService {
     private static volatile String unpinnedPkg = null;
     private static volatile long unpinnedUntil = 0;
     private static volatile boolean wasLockTaskActive = false;
-    private static volatile long lastGuardedAppLaunchTime = 0;
-    private static final long LAUNCH_GRACE_PERIOD_MS = 2500;
 
+    // Sahte Uyarı (Fake Crash) Durum Değişkenleri
+    private View fakeCrashView;
+    private volatile boolean isFakeCrashShowing = false;
+    private volatile String currentFakeCrashPkg = null;
+    private static volatile String ownerUnlockedPkg = null; // Yalnızca sahibi 3 saniye basarak açtığında atanır
+    private final Handler fakeCrashHandler = new Handler(Looper.getMainLooper());
+    private boolean isFakeHoldUnlocked = false;
+
+    // PIN Kilit Ekranı (Overlay) Değişkenleri
     private WindowManager windowManager;
     private View overlayView;
     private volatile boolean isOverlayShowing = false;
@@ -70,7 +77,7 @@ public class PinAccessibilityService extends AccessibilityService {
         if (pkgSeq == null) return;
         String currentPkg = pkgSeq.toString();
 
-        // Kendi uygulamamız veya sistem iç süreçleri (Play Games, Game Booster, klavye vb.) yoksay
+        // Kendi uygulamamız veya sistem iç süreçleri yoksay
         if (isSystemOrOverlayExempt(currentPkg)) {
             return;
         }
@@ -82,7 +89,9 @@ public class PinAccessibilityService extends AccessibilityService {
             sessionLockedPkg = null;
             unpinnedPkg = null;
             unpinnedUntil = 0;
+            ownerUnlockedPkg = null;
             hideOverlay();
+            hideFakeCrashOverlay();
             return;
         }
 
@@ -91,7 +100,7 @@ public class PinAccessibilityService extends AccessibilityService {
             return;
         }
 
-        // Android işletim sistemi sabitleme (LockTaskMode) durumunu kontrol et
+        // Android sabitleme (LockTaskMode) durum kontrolü
         ActivityManager am = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
         int lockMode = am != null ? am.getLockTaskModeState() : ActivityManager.LOCK_TASK_MODE_NONE;
         boolean isCurrentlyLocked = (lockMode == ActivityManager.LOCK_TASK_MODE_PINNED || lockMode == ActivityManager.LOCK_TASK_MODE_LOCKED);
@@ -102,7 +111,6 @@ public class PinAccessibilityService extends AccessibilityService {
                 unpinnedPkg = activeGuardedPkg;
                 long cooldownMs = SettingsManager.getCooldownSeconds(this) * 1000L;
                 unpinnedUntil = System.currentTimeMillis() + cooldownMs;
-                // Kullanıcıyı hemen Ana Ekrana gönder ki hedef uygulamada kilitli kalmasın
                 performGlobalAction(GLOBAL_ACTION_HOME);
             }
         }
@@ -112,28 +120,34 @@ public class PinAccessibilityService extends AccessibilityService {
 
         // ─── 1. DURUM: KORUNAN UYGULAMA AÇILDI ───
         if (SettingsManager.isPackagePinned(this, currentPkg)) {
-            // Kullanıcı bu uygulamayı az önce donanım tuşlarıyla unpin yaptıysa 10 saniye boyunca tekrar kilitleme
+            int appMode = SettingsManager.getAppLockMode(this, currentPkg);
+
+            // ══════════════════════════════════════════════
+            // A. SAHTE UYARI (FAKE CRASH) MODU
+            // ══════════════════════════════════════════════
+            if (appMode == SettingsManager.LOCK_MODE_FAKE_CRASH) {
+                // Sahibi 3 saniye basılı tutarak bu uygulamayı açtıysa ve hala içindeyse engelleme
+                if (currentPkg.equals(ownerUnlockedPkg)) {
+                    hideFakeCrashOverlay();
+                    return;
+                }
+                // Sahibi henüz kilidi açmadı: HER SEFERİNDE EKRANIN ÜSTÜNDE ÇÖKME GÖSTER!
+                showFakeCrashOverlay(currentPkg);
+                return;
+            }
+
+            // ══════════════════════════════════════════════
+            // B. SABİT KİLİT (STANDART PIN) MODU
+            // ══════════════════════════════════════════════
+            hideFakeCrashOverlay();
+
+            // Kullanıcı bu uygulamayı az önce donanım tuşlarıyla unpin yaptıysa bekleme süresince tekrar kilitleme
             if (currentPkg.equals(unpinnedPkg) && now < unpinnedUntil) {
                 return;
             }
 
             // Bu uygulama bu oturumda zaten kilitlendiyse döngüye girmemek için tekrar kilitleme
             if (currentPkg.equals(sessionLockedPkg)) {
-                return;
-            }
-
-            // Kilit Türü Kontrolü:
-            int mode = SettingsManager.getAppLockMode(this, currentPkg);
-            if (mode == SettingsManager.LOCK_MODE_FAKE_CRASH) {
-                // Eğer sahibi 3 saniye basarak bypass ettiyse çökme gösterme
-                if (SettingsManager.isBypassActive(currentPkg)) {
-                    return;
-                }
-                // Sahte Çökme Kalkanını Aç
-                Intent fakeIntent = new Intent(this, FakeCrashActivity.class);
-                fakeIntent.putExtra(FakeCrashActivity.EXTRA_TARGET_PKG, currentPkg);
-                fakeIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                startActivity(fakeIntent);
                 return;
             }
 
@@ -150,6 +164,12 @@ public class PinAccessibilityService extends AccessibilityService {
         }
 
         // ─── 2. DURUM: KULLANICI KORUNAN UYGULAMADAN AYRILDI (ANA EKRAN YA DA DİĞER UYGULAMA) ───
+        // Eğer kullanıcı Sahte Uyarı ile açtığı uygulamadan çıktıysa oturumu hemen sıfırla!
+        if (ownerUnlockedPkg != null && !ownerUnlockedPkg.equals(currentPkg)) {
+            ownerUnlockedPkg = null;
+        }
+        hideFakeCrashOverlay();
+
         if (sessionLockedPkg != null && !sessionLockedPkg.equals(currentPkg)) {
             sessionLockedPkg = null;
             if (now >= unpinnedUntil) {
@@ -161,20 +181,139 @@ public class PinAccessibilityService extends AccessibilityService {
         hideOverlay();
     }
 
+    // ─── Sahte Uyarı (Fake Crash) Overlay Yönetimi ─────────────────────────────
+
+    private void showFakeCrashOverlay(final String targetPkg) {
+        mainHandler.post(() -> {
+            if (windowManager == null) {
+                windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
+            }
+
+            // Eğer zaten bu paket için çökme penceresi ekrandaysa tekrar oluşturma
+            if (isFakeCrashShowing && fakeCrashView != null && targetPkg.equals(currentFakeCrashPkg)) {
+                return;
+            }
+
+            hideFakeCrashOverlay();
+
+            try {
+                ContextThemeWrapper ctxWrapper = new ContextThemeWrapper(this, R.style.Theme_PinMaster);
+                LayoutInflater inflater = LayoutInflater.from(ctxWrapper);
+                fakeCrashView = inflater.inflate(R.layout.dialog_fake_crash, null);
+                currentFakeCrashPkg = targetPkg;
+
+                String appLabel = "Uygulama";
+                try {
+                    PackageManager pm = getPackageManager();
+                    ApplicationInfo info = pm.getApplicationInfo(targetPkg, 0);
+                    appLabel = pm.getApplicationLabel(info).toString();
+                } catch (Exception ignored) {}
+
+                TextView tvTitle = fakeCrashView.findViewById(R.id.tv_fake_app_title);
+                TextView tvMessage = fakeCrashView.findViewById(R.id.tv_fake_app_message);
+                TextView btnFeedback = fakeCrashView.findViewById(R.id.btn_fake_feedback);
+                TextView btnClose = fakeCrashView.findViewById(R.id.btn_fake_close);
+
+                tvTitle.setText(appLabel);
+                tvMessage.setText(appLabel + " uygulaması sürekli olarak duruyor.");
+
+                // Geri bildirim butonuna veya dış alana basılırsa ana ekrana at
+                btnFeedback.setOnClickListener(v -> exitToHome());
+                fakeCrashView.setOnClickListener(v -> exitToHome());
+
+                // 3 Saniye Basılı Tutma Dinleyicisi
+                final Runnable unlockRunnable = () -> {
+                    isFakeHoldUnlocked = true;
+                    vibrate(120);
+                    ownerUnlockedPkg = targetPkg;
+                    hideFakeCrashOverlay();
+                };
+
+                btnClose.setOnTouchListener((v, event) -> {
+                    switch (event.getAction()) {
+                        case MotionEvent.ACTION_DOWN:
+                            isFakeHoldUnlocked = false;
+                            fakeCrashHandler.postDelayed(unlockRunnable, 3000);
+                            return true;
+
+                        case MotionEvent.ACTION_UP:
+                            fakeCrashHandler.removeCallbacks(unlockRunnable);
+                            if (!isFakeHoldUnlocked) {
+                                // 3 saniye dolmadan parmak çekildi: Sahte çökme gibi davran ve ana ekrana dön
+                                exitToHome();
+                            }
+                            return true;
+
+                        case MotionEvent.ACTION_CANCEL:
+                            fakeCrashHandler.removeCallbacks(unlockRunnable);
+                            return true;
+                    }
+                    return false;
+                });
+
+                WindowManager.LayoutParams params = new WindowManager.LayoutParams(
+                        WindowManager.LayoutParams.MATCH_PARENT,
+                        WindowManager.LayoutParams.MATCH_PARENT,
+                        Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+                                ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+                                : WindowManager.LayoutParams.TYPE_PHONE,
+                        WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
+                                | WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
+                        PixelFormat.TRANSLUCENT
+                );
+                params.gravity = Gravity.CENTER;
+
+                windowManager.addView(fakeCrashView, params);
+                isFakeCrashShowing = true;
+
+            } catch (Exception ignored) {}
+        });
+    }
+
+    private void hideFakeCrashOverlay() {
+        mainHandler.post(() -> {
+            if (isFakeCrashShowing && fakeCrashView != null && windowManager != null) {
+                try {
+                    windowManager.removeView(fakeCrashView);
+                } catch (Exception ignored) {}
+                fakeCrashView = null;
+                isFakeCrashShowing = false;
+                currentFakeCrashPkg = null;
+            }
+        });
+    }
+
+    private void exitToHome() {
+        hideFakeCrashOverlay();
+        performGlobalAction(GLOBAL_ACTION_HOME);
+    }
+
     // ─── Key Event Filtering ──────────────────────────────────────────────────
 
     @Override
     protected boolean onKeyEvent(KeyEvent event) {
+        // Sahte çökme açıkken geri tuşuna basılırsa doğrudan ana ekrana at
+        if (isFakeCrashShowing) {
+            int code = event.getKeyCode();
+            if (code == KeyEvent.KEYCODE_BACK) {
+                if (event.getAction() == KeyEvent.ACTION_UP) {
+                    mainHandler.post(this::exitToHome);
+                }
+                return true;
+            }
+            if (code == KeyEvent.KEYCODE_HOME || code == KeyEvent.KEYCODE_APP_SWITCH) {
+                return true;
+            }
+        }
+
         if (isOverlayShowing) {
             int code = event.getKeyCode();
-            // Geri tuşu -> Uygulamaya geri döndür
             if (code == KeyEvent.KEYCODE_BACK) {
                 if (event.getAction() == KeyEvent.ACTION_UP) {
                     mainHandler.post(() -> returnToGuardedApp(activeGuardedPkg));
                 }
                 return true;
             }
-            // Home veya Son Uygulamalar donanım tuşları -> Tamamen yut
             if (code == KeyEvent.KEYCODE_HOME || code == KeyEvent.KEYCODE_APP_SWITCH) {
                 return true;
             }
@@ -249,120 +388,119 @@ public class PinAccessibilityService extends AccessibilityService {
         tvAppName     = overlayView.findViewById(R.id.tv_app_name);
         btnReturnApp  = overlayView.findViewById(R.id.btn_return_app);
         tvErrorMsg    = overlayView.findViewById(R.id.tv_error_msg);
+        dot1          = overlayView.findViewById(R.id.dot_1);
+        dot2          = overlayView.findViewById(R.id.dot_2);
+        dot3          = overlayView.findViewById(R.id.dot_3);
+        dot4          = overlayView.findViewById(R.id.dot_4);
 
-        dot1 = overlayView.findViewById(R.id.dot_1);
-        dot2 = overlayView.findViewById(R.id.dot_2);
-        dot3 = overlayView.findViewById(R.id.dot_3);
-        dot4 = overlayView.findViewById(R.id.dot_4);
-
-        btnReturnApp.setOnClickListener(v -> returnToGuardedApp(targetPkg));
         updateAppInfo(targetPkg);
+
+        if (btnReturnApp != null) {
+            btnReturnApp.setOnClickListener(v -> returnToGuardedApp(activeGuardedPkg));
+        }
     }
 
     private void updateAppInfo(String pkg) {
-        if (pkg == null || overlayView == null) return;
+        if (pkg == null) return;
         try {
             PackageManager pm = getPackageManager();
             ApplicationInfo info = pm.getApplicationInfo(pkg, 0);
-            CharSequence label = pm.getApplicationLabel(info);
-            Drawable icon = pm.getApplicationIcon(info);
-
-            if (ivAppIcon != null) ivAppIcon.setImageDrawable(icon);
-            if (tvAppName != null) tvAppName.setText(label);
-            if (btnReturnApp != null) btnReturnApp.setText(label + " Uygulamasına Dön");
-        } catch (Exception e) {
-            if (tvAppName != null) tvAppName.setText(pkg);
-            if (btnReturnApp != null) btnReturnApp.setText("Uygulamaya Dön");
-        }
+            if (tvAppName != null) tvAppName.setText(pm.getApplicationLabel(info));
+            if (ivAppIcon != null) ivAppIcon.setImageDrawable(pm.getApplicationIcon(info));
+        } catch (Exception ignored) {}
     }
 
     private void setupKeypad() {
         if (overlayView == null) return;
         int[] numBtnIds = {
-                R.id.btn_key_0, R.id.btn_key_1, R.id.btn_key_2,
-                R.id.btn_key_3, R.id.btn_key_4, R.id.btn_key_5,
-                R.id.btn_key_6, R.id.btn_key_7, R.id.btn_key_8, R.id.btn_key_9
+                R.id.btn_key_0, R.id.btn_key_1, R.id.btn_key_2, R.id.btn_key_3,
+                R.id.btn_key_4, R.id.btn_key_5, R.id.btn_key_6, R.id.btn_key_7,
+                R.id.btn_key_8, R.id.btn_key_9
         };
 
-        for (int i = 0; i <= 9; i++) {
-            final String digit = String.valueOf(i);
-            Button b = overlayView.findViewById(numBtnIds[i]);
-            if (b != null) {
-                b.setOnClickListener(v -> onDigitPressed(digit));
+        for (int id : numBtnIds) {
+            Button btn = overlayView.findViewById(id);
+            if (btn != null) {
+                btn.setOnClickListener(v -> {
+                    String digit = ((Button) v).getText().toString();
+                    onDigitEntered(digit);
+                });
             }
         }
 
-        View btnDel = overlayView.findViewById(R.id.btn_key_del);
-        if (btnDel != null) {
-            btnDel.setOnClickListener(v -> onDeletePressed());
+        Button btnDelete = overlayView.findViewById(R.id.btn_key_del);
+        if (btnDelete != null) {
+            btnDelete.setOnClickListener(v -> onDeleteClicked());
         }
     }
 
-    private void onDigitPressed(String digit) {
+    private void onDigitEntered(String digit) {
         if (enteredPin.length() >= 4) return;
         enteredPin.append(digit);
         updateDots();
-        if (tvErrorMsg != null) tvErrorMsg.setVisibility(View.INVISIBLE);
+        vibrate(30);
 
         if (enteredPin.length() == 4) {
-            verifyPin();
+            checkPin();
         }
     }
 
-    private void onDeletePressed() {
+    private void onDeleteClicked() {
         if (enteredPin.length() > 0) {
             enteredPin.deleteCharAt(enteredPin.length() - 1);
             updateDots();
-            if (tvErrorMsg != null) tvErrorMsg.setVisibility(View.INVISIBLE);
+            vibrate(20);
         }
+        if (tvErrorMsg != null) tvErrorMsg.setText("");
     }
 
     private void updateDots() {
         int len = enteredPin.length();
-        if (dot1 != null) dot1.setBackgroundResource(len >= 1 ? R.drawable.pin_dot_filled : R.drawable.pin_dot_empty);
-        if (dot2 != null) dot2.setBackgroundResource(len >= 2 ? R.drawable.pin_dot_filled : R.drawable.pin_dot_empty);
-        if (dot3 != null) dot3.setBackgroundResource(len >= 3 ? R.drawable.pin_dot_filled : R.drawable.pin_dot_empty);
-        if (dot4 != null) dot4.setBackgroundResource(len >= 4 ? R.drawable.pin_dot_filled : R.drawable.pin_dot_empty);
+        setDot(dot1, len >= 1);
+        setDot(dot2, len >= 2);
+        setDot(dot3, len >= 3);
+        setDot(dot4, len >= 4);
     }
 
-    private void verifyPin() {
+    private void setDot(View dot, boolean filled) {
+        if (dot == null) return;
+        dot.setBackgroundResource(filled ? R.drawable.pin_dot_filled : R.drawable.pin_dot_empty);
+    }
+
+    private void checkPin() {
+        String entered = enteredPin.toString();
         String correct = SettingsManager.getExitPin(this);
-        if (enteredPin.toString().equals(correct)) {
-            // Başarılı PIN -> Korumadan çıkışa izin ver!
-            if (SettingsManager.isVibrateEnabled(this)) {
-                vibrate(120);
-            }
+
+        if (entered.equals(correct)) {
+            vibrate(80);
+            hideOverlay();
+            isInsideProtectedApp = false;
+            activeGuardedPkg = null;
+            sessionLockedPkg = null;
+
             if (ShizukuHelper.hasPermission()) {
                 ShizukuHelper.unlockTask();
             }
-            isInsideProtectedApp = false;
-            activeGuardedPkg = null;
-            hideOverlay();
-            // Artık kalkan tamamen kapandı, kullanıcı ana ekranda tamamen serbest!
+            performGlobalAction(GLOBAL_ACTION_HOME);
         } else {
-            // Hatalı PIN
-            if (SettingsManager.isVibrateEnabled(this)) {
-                vibrateDouble();
+            vibrateDouble();
+            if (tvErrorMsg != null) {
+                tvErrorMsg.setText("Hatalı PIN, tekrar deneyin");
             }
-            if (tvErrorMsg != null) tvErrorMsg.setVisibility(View.VISIBLE);
             enteredPin.setLength(0);
             updateDots();
         }
     }
 
     private void returnToGuardedApp(String pkg) {
-        lastGuardedAppLaunchTime = android.os.SystemClock.uptimeMillis();
+        hideOverlay();
         if (pkg != null) {
-            Intent launch = getPackageManager().getLaunchIntentForPackage(pkg);
-            if (launch != null) {
-                launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-                try {
-                    startActivity(launch);
-                } catch (Exception ignored) {}
+            Intent intent = getPackageManager().getLaunchIntentForPackage(pkg);
+            if (intent != null) {
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                startActivity(intent);
             }
         }
-        hideOverlay();
-        // isInsideProtectedApp true kalır, çünkü kullanıcı tekrar korunan uygulamanın içinde!
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────
@@ -380,27 +518,16 @@ public class PinAccessibilityService extends AccessibilityService {
 
     private boolean isSystemOrOverlayExempt(String pkg) {
         if (pkg == null) return true;
-        // Kendi uygulamamız
         if (pkg.equals(getPackageName())) return true;
-        // Android çekirdek
         if (pkg.equals("android")) return true;
-        // System UI (ses seviyesi çubuğu, bildirim bannerları - kullanıcı başka uygulamaya basmadıkça oyunu bölmemeli)
         if (pkg.equals("com.android.systemui")) return true;
-        // Google Play Hizmetleri ve Oyun servisleri
         if (pkg.startsWith("com.google.android.gms") || pkg.startsWith("com.google.android.play.games")) return true;
-        // Google Play Store & Webview / Reklam pencereleri
         if (pkg.equals("com.android.vending") || pkg.equals("com.google.android.webview") || pkg.startsWith("org.chromium")) return true;
-        // İzin onay diyaloğu (mikrofon, kamera izinleri)
         if (pkg.contains("permissioncontroller")) return true;
-        // Samsung Game Booster / Game Tools / GOS / GameDriver
         if (pkg.startsWith("com.samsung.android.game") || pkg.startsWith("com.samsung.gamedriver")) return true;
-        // Telefon görüşmesi arayüzleri
         if (pkg.contains("incallui") || pkg.contains("telecom") || pkg.contains("dialer")) return true;
-        // Klavyeler
         if (pkg.contains("inputmethod") || pkg.contains("honeyboard") || pkg.contains("latin") || pkg.contains("keyboard")) return true;
-        // Kimlik doğrulama / Autofill
         if (pkg.contains("autofill") || pkg.contains("credentials")) return true;
-
         return false;
     }
 
@@ -435,12 +562,15 @@ public class PinAccessibilityService extends AccessibilityService {
     public void onInterrupt() {
         isInsideProtectedApp = false;
         activeGuardedPkg = null;
+        ownerUnlockedPkg = null;
         hideOverlay();
+        hideFakeCrashOverlay();
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
         hideOverlay();
+        hideFakeCrashOverlay();
     }
 }
