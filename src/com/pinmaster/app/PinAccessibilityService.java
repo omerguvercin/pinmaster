@@ -27,6 +27,10 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import java.lang.reflect.Method;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 public class PinAccessibilityService extends AccessibilityService {
 
@@ -46,10 +50,11 @@ public class PinAccessibilityService extends AccessibilityService {
     private final Handler fakeCrashHandler = new Handler(Looper.getMainLooper());
     private boolean isFakeHoldUnlocked = false;
 
-    // Sayaç Kilit (Süreli Çocuk Kalkanı) Değişkenleri
-    private final Handler timerLockHandler = new Handler(Looper.getMainLooper());
-    private Runnable activeTimerRunnable = null;
+    // Süreli Kilit (Zamanlayıcı) Değişkenleri
+    private static ScheduledExecutorService timerExecutor = null;
+    private static ScheduledFuture<?> activeTimerFuture = null;
     private static volatile String activeTimerPkg = null;
+    private static volatile long activeTimerExpireAt = 0;
 
     // PIN Kilit Ekranı (Overlay) Değişkenleri
     private WindowManager windowManager;
@@ -177,64 +182,8 @@ public class PinAccessibilityService extends AccessibilityService {
             }
 
             // ══════════════════════════════════════════════
-            // B. SAYAÇ KİLİT (SÜRELİ ÇOCUK KALKANI) MODU
+            // B. KİLİTLİ (SÜRELİ YA DA SÜRESİZ) MODU
             // ══════════════════════════════════════════════
-            if (appMode == SettingsManager.LOCK_MODE_TIMER) {
-                hideFakeCrashOverlay();
-
-                // Kullanıcı bu uygulamayı az önce donanım tuşlarıyla unpin yaptıysa bekleme süresince tekrar kilitleme
-                if (currentPkg.equals(unpinnedPkg) && now < unpinnedUntil) {
-                    return;
-                }
-
-                // Bu uygulama için sayaç henüz başlamadıysa başlat
-                if (!currentPkg.equals(activeTimerPkg)) {
-                    cancelActiveTimer();
-                    activeTimerPkg = currentPkg;
-                    final String timerPkg = currentPkg;
-                    int minutes = SettingsManager.getAppTimerMinutes(this, currentPkg);
-                    long durationMs = minutes * 60 * 1000L;
-                    android.util.Log.i("PinMaster", "Gizli Sayac baslatildi: " + timerPkg + " Sure: " + minutes + " dk (" + durationMs + " ms)");
-
-                    activeTimerRunnable = () -> {
-                        android.util.Log.i("PinMaster", "Sayac doldu! Uygulama: " + timerPkg + " -> Sabitleme kaldirilip ekran kilitleniyor.");
-                        vibrateDouble();
-                        ShizukuHelper.setPrivacyShield(false);
-                        if (ShizukuHelper.hasPermission()) {
-                            ShizukuHelper.unlockTask();
-                        }
-                        performGlobalAction(GLOBAL_ACTION_HOME);
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                            mainHandler.postDelayed(() -> {
-                                performGlobalAction(GLOBAL_ACTION_LOCK_SCREEN);
-                            }, 400);
-                        }
-                        cancelActiveTimer();
-                    };
-                    timerLockHandler.postDelayed(activeTimerRunnable, durationMs);
-                }
-
-                isInsideProtectedApp = true;
-                activeGuardedPkg = currentPkg;
-                sessionLockedPkg = currentPkg;
-                hideOverlay();
-
-                // Mahremiyet Kalkanı Aktifleştir
-                if (SettingsManager.isPrivacyShieldEnabled(this)) {
-                    ShizukuHelper.setPrivacyShield(true);
-                }
-
-                // Shizuku aktifse doğrudan işletim sistemi seviyesinde sabitle (App Pinning)
-                if (ShizukuHelper.hasPermission()) {
-                    ShizukuHelper.lockTopApp(currentPkg);
-                }
-                return;
-            }
-
-            // ══════════════════════════════════════════════
-            // C. SABİT KİLİT (STANDART PIN) MODU
-            // ══════════════════════════════════════════════
-            cancelActiveTimer();
             hideFakeCrashOverlay();
 
             // Kullanıcı bu uygulamayı az önce donanım tuşlarıyla unpin yaptıysa bekleme süresince tekrar kilitleme
@@ -251,6 +200,52 @@ public class PinAccessibilityService extends AccessibilityService {
             activeGuardedPkg = currentPkg;
             sessionLockedPkg = currentPkg;
             hideOverlay();
+
+            // Süre Kontrolü: Kullanıcı bu uygulama için bir süre seçti mi? (örn. 1 dk, 15 dk vs.)
+            int timerMinutes = SettingsManager.getAppTimerMinutes(this, currentPkg);
+            if (timerMinutes > 0) {
+                long durationMs = timerMinutes * 60 * 1000L;
+                if (!currentPkg.equals(activeTimerPkg) || activeTimerFuture == null || activeTimerFuture.isDone()) {
+                    cancelActiveTimer();
+                    activeTimerPkg = currentPkg;
+                    activeTimerExpireAt = System.currentTimeMillis() + durationMs;
+                    final String timerPkg = currentPkg;
+                    android.util.Log.i("PinMaster", "Guvenli Sayac baslatildi: " + timerPkg + " Sure: " + timerMinutes + " dk (" + durationMs + " ms)");
+
+                    if (timerExecutor == null || timerExecutor.isShutdown()) {
+                        timerExecutor = Executors.newSingleThreadScheduledExecutor();
+                    }
+
+                    activeTimerFuture = timerExecutor.schedule(() -> {
+                        android.util.Log.i("PinMaster", "SURE DOLDU! Hedef: " + timerPkg + " -> Kilit kaldirilip ekran kapatiliyor.");
+                        vibrateDouble();
+                        ShizukuHelper.setPrivacyShield(false);
+
+                        // 1. Sabitlemeyi kaldır
+                        if (ShizukuHelper.hasPermission()) {
+                            ShizukuHelper.unlockTask();
+                        }
+
+                        // 2. Ana ekrana dön
+                        performGlobalAction(GLOBAL_ACTION_HOME);
+                        ShizukuHelper.executeCommand("input keyevent KEYCODE_HOME");
+
+                        // 3. Ekranı kapat ve kilitle
+                        mainHandler.postDelayed(() -> {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                                performGlobalAction(GLOBAL_ACTION_LOCK_SCREEN);
+                            }
+                            ShizukuHelper.executeCommand("input keyevent 26");
+                        }, 350);
+
+                        cancelActiveTimer();
+                    }, durationMs, TimeUnit.MILLISECONDS);
+                }
+            } else {
+                if (activeTimerPkg != null && activeTimerPkg.equals(currentPkg)) {
+                    cancelActiveTimer();
+                }
+            }
 
             // Mahremiyet Kalkanı Aktifleştir
             if (SettingsManager.isPrivacyShieldEnabled(this)) {
@@ -271,10 +266,13 @@ public class PinAccessibilityService extends AccessibilityService {
             ownerUnlockedPkg = null;
         }
 
-        // Eğer sayaçlı bir uygulamadan çıktıysa sayacı iptal et
-        if (activeTimerPkg != null && !activeTimerPkg.equals(currentPkg)) {
-            android.util.Log.i("PinMaster", "Sayacli uygulamadan cikildi: " + activeTimerPkg + " -> Yeni: " + currentPkg);
-            cancelActiveTimer();
+        // Eğer kullanıcı gerçekten Ana Ekrana döndüyse:
+        if (isHomeLauncher(currentPkg)) {
+            if (activeTimerPkg != null) {
+                android.util.Log.i("PinMaster", "Ana ekrana donuldu, sayac temizleniyor: " + activeTimerPkg);
+                cancelActiveTimer();
+            }
+            ShizukuHelper.setPrivacyShield(false);
         }
 
         if (sessionLockedPkg != null && !sessionLockedPkg.equals(currentPkg)) {
@@ -683,12 +681,26 @@ public class PinAccessibilityService extends AccessibilityService {
         } catch (Exception ignored) {}
     }
 
+    private boolean isHomeLauncher(String pkg) {
+        if (pkg == null) return false;
+        try {
+            Intent intent = new Intent(Intent.ACTION_MAIN);
+            intent.addCategory(Intent.CATEGORY_HOME);
+            android.content.pm.ResolveInfo resolve = getPackageManager().resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY);
+            return resolve != null && resolve.activityInfo != null && pkg.equals(resolve.activityInfo.packageName);
+        } catch (Exception ignored) {}
+        return false;
+    }
+
     private void cancelActiveTimer() {
-        if (activeTimerRunnable != null) {
-            timerLockHandler.removeCallbacks(activeTimerRunnable);
-            activeTimerRunnable = null;
+        if (activeTimerFuture != null) {
+            try {
+                activeTimerFuture.cancel(true);
+            } catch (Exception ignored) {}
+            activeTimerFuture = null;
         }
         activeTimerPkg = null;
+        activeTimerExpireAt = 0;
     }
 
     @Override

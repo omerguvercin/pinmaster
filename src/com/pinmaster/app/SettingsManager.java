@@ -23,9 +23,9 @@ public class SettingsManager {
     private static final String PREF_MODE_PREFIX = "mode_";
     private static final String PREF_TIMER_PREFIX = "timer_min_";
 
-    public static final int LOCK_MODE_PIN        = 0; // Sabit Kilit
+    public static final int LOCK_MODE_PIN        = 0; // Kilitli (Varsayılan)
     public static final int LOCK_MODE_FAKE_CRASH = 1; // Sahte Uyarı
-    public static final int LOCK_MODE_TIMER      = 2; // Sayaç Kilit
+    public static final int LOCK_MODE_TIMER      = 0; // Kilitli ile birleştirildi
 
     // Geçici bypass hafızası (Örn: Sahte Uyarı 3 saniye basılı tutulup aşıldığında)
     private static final Map<String, Long> bypassMap = new ConcurrentHashMap<>();
@@ -94,8 +94,8 @@ public class SettingsManager {
     }
 
     public static int getAppTimerMinutes(Context ctx, String pkg) {
-        if (pkg == null) return 15;
-        return getPrefs(ctx).getInt(PREF_TIMER_PREFIX + pkg, 15);
+        if (pkg == null) return 0;
+        return getPrefs(ctx).getInt(PREF_TIMER_PREFIX + pkg, 0); // 0 = Süresiz
     }
 
     public static void setAppTimerMinutes(Context ctx, String pkg, int minutes) {
@@ -105,27 +105,21 @@ public class SettingsManager {
 
     public static String getLockModeLabel(Context ctx, String pkg) {
         int mode = getAppLockMode(ctx, pkg);
-        switch (mode) {
-            case LOCK_MODE_FAKE_CRASH:
-                return "Sahte Uyarı";
-            case LOCK_MODE_TIMER:
-                return "Sayaç: " + getAppTimerMinutes(ctx, pkg) + "dk";
-            case LOCK_MODE_PIN:
-            default:
-                return "Sabit Kilit";
+        if (mode == LOCK_MODE_FAKE_CRASH) {
+            return "Sahte Uyarı";
         }
+        int min = getAppTimerMinutes(ctx, pkg);
+        if (min > 0) {
+            return "Kilitli: " + min + "dk";
+        }
+        return "Kilitli";
     }
 
     public static String getLockModeLabel(int mode) {
-        switch (mode) {
-            case LOCK_MODE_FAKE_CRASH:
-                return "Sahte Uyarı";
-            case LOCK_MODE_TIMER:
-                return "Sayaç Kilit";
-            case LOCK_MODE_PIN:
-            default:
-                return "Sabit Kilit";
+        if (mode == LOCK_MODE_FAKE_CRASH) {
+            return "Sahte Uyarı";
         }
+        return "Kilitli";
     }
 
     // ─── Bypass Yönetimi ──────────────────────────────────────────────────────

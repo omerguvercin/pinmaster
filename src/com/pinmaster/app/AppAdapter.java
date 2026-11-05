@@ -108,15 +108,16 @@ public class AppAdapter extends BaseAdapter {
         }
         holder.toggle.setChecked(app.isPinned());
 
-        // Kilit Modu Rozeti (Sabit Kilit / Sahte Uyarı / Sayaç)
+        // Kilit Modu Rozeti (Kilitli / Kilitli: 15dk / Sahte Uyarı)
         if (app.isPinned()) {
             holder.lockMode.setVisibility(View.VISIBLE);
             int currentMode = SettingsManager.getAppLockMode(context, app.getPackageName());
+            int timerMin = SettingsManager.getAppTimerMinutes(context, app.getPackageName());
             holder.lockMode.setText(SettingsManager.getLockModeLabel(context, app.getPackageName()));
             int colorRes = R.color.accent_cyan;
             if (currentMode == SettingsManager.LOCK_MODE_FAKE_CRASH) {
                 colorRes = R.color.accent_violet;
-            } else if (currentMode == SettingsManager.LOCK_MODE_TIMER) {
+            } else if (timerMin > 0) {
                 colorRes = R.color.accent_orange;
             }
             holder.lockMode.setTextColor(context.getResources().getColor(colorRes));
@@ -173,53 +174,47 @@ public class AppAdapter extends BaseAdapter {
     }
 
     private void showModeDialog(AppModel app) {
-        final String[] options = {"Sabit Kilit", "Sahte Uyarı", "Sayaç Kilit"};
+        final String[] options = {
+                "Kilitli (Süresiz)",
+                "Kilitli: 1 dakika (Test)",
+                "Kilitli: 5 dakika",
+                "Kilitli: 10 dakika",
+                "Kilitli: 15 dakika",
+                "Kilitli: 20 dakika",
+                "Kilitli: 30 dakika",
+                "Kilitli: 45 dakika",
+                "Kilitli: 60 dakika",
+                "Sahte Uyarı"
+        };
+        final int[] durations = {0, 1, 5, 10, 15, 20, 30, 45, 60, -1};
+
         int currentMode = SettingsManager.getAppLockMode(context, app.getPackageName());
-        int selectedIndex = 0;
+        int currentMin = SettingsManager.getAppTimerMinutes(context, app.getPackageName());
+
+        int selectedIndex = 0; // Kilitli (Süresiz)
         if (currentMode == SettingsManager.LOCK_MODE_FAKE_CRASH) {
-            selectedIndex = 1;
-        } else if (currentMode == SettingsManager.LOCK_MODE_TIMER) {
-            selectedIndex = 2;
-        }
-
-        new AlertDialog.Builder(context)
-                .setTitle("Kilit Türü")
-                .setSingleChoiceItems(options, selectedIndex, (dialog, which) -> {
-                    dialog.dismiss();
-                    if (which == 0) {
-                        SettingsManager.setAppLockMode(context, app.getPackageName(), SettingsManager.LOCK_MODE_PIN);
-                        notifyDataSetChanged();
-                    } else if (which == 1) {
-                        SettingsManager.setAppLockMode(context, app.getPackageName(), SettingsManager.LOCK_MODE_FAKE_CRASH);
-                        notifyDataSetChanged();
-                    } else if (which == 2) {
-                        showTimerDurationDialog(app);
-                    }
-                })
-                .setNegativeButton("İptal", null)
-                .show();
-    }
-
-    private void showTimerDurationDialog(AppModel app) {
-        final int[] durations = {1, 5, 10, 15, 20, 30, 45, 60};
-        final String[] labels = {"1 dakika", "5 dakika", "10 dakika", "15 dakika", "20 dakika", "30 dakika", "45 dakika", "60 dakika"};
-        int currentMinutes = SettingsManager.getAppTimerMinutes(context, app.getPackageName());
-        int selectedIndex = 3; // Varsayılan 15 dk
-        for (int i = 0; i < durations.length; i++) {
-            if (durations[i] == currentMinutes) {
-                selectedIndex = i;
-                break;
+            selectedIndex = options.length - 1; // Sahte Uyarı
+        } else {
+            for (int i = 0; i < durations.length - 1; i++) {
+                if (durations[i] == currentMin) {
+                    selectedIndex = i;
+                    break;
+                }
             }
         }
 
         new AlertDialog.Builder(context)
-                .setTitle("Kullanım Süresi")
-                .setSingleChoiceItems(labels, selectedIndex, (dialog, which) -> {
-                    int chosenMinutes = durations[which];
-                    SettingsManager.setAppTimerMinutes(context, app.getPackageName(), chosenMinutes);
-                    SettingsManager.setAppLockMode(context, app.getPackageName(), SettingsManager.LOCK_MODE_TIMER);
-                    notifyDataSetChanged();
+                .setTitle("Kilit Ayarı")
+                .setSingleChoiceItems(options, selectedIndex, (dialog, which) -> {
                     dialog.dismiss();
+                    if (which == options.length - 1) {
+                        SettingsManager.setAppLockMode(context, app.getPackageName(), SettingsManager.LOCK_MODE_FAKE_CRASH);
+                    } else {
+                        int chosenMin = durations[which];
+                        SettingsManager.setAppLockMode(context, app.getPackageName(), SettingsManager.LOCK_MODE_PIN);
+                        SettingsManager.setAppTimerMinutes(context, app.getPackageName(), chosenMin);
+                    }
+                    notifyDataSetChanged();
                 })
                 .setNegativeButton("İptal", null)
                 .show();
