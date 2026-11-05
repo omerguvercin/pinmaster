@@ -176,6 +176,20 @@ public class SettingsManager {
 
     public static void setKioskActive(Context ctx, boolean active) {
         getPrefs(ctx).edit().putBoolean(KEY_KIOSK_ACTIVE, active).apply();
+        try {
+            File intFile = new File(ctx.getFilesDir(), "kiosk_active.txt");
+            if (active) {
+                if (!intFile.exists()) intFile.createNewFile();
+                if (ShizukuHelper.hasPermission()) {
+                    ShizukuHelper.executeCommand("touch /data/local/tmp/kiosk_active.txt");
+                }
+            } else {
+                if (intFile.exists()) intFile.delete();
+                if (ShizukuHelper.hasPermission()) {
+                    ShizukuHelper.executeCommand("rm -f /data/local/tmp/kiosk_active.txt");
+                }
+            }
+        } catch (Exception ignored) {}
     }
 
     public static Set<String> getKioskPackages(Context ctx) {

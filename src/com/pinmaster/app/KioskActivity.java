@@ -15,7 +15,6 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
@@ -60,16 +59,10 @@ public class KioskActivity extends Activity {
         // Vitrin modunu aktif yap
         SettingsManager.setKioskActive(this, true);
 
+        // Mahremiyet Kalkanı
         if (SettingsManager.isPrivacyShieldEnabled(this)) {
             ShizukuHelper.setPrivacyShield(true);
         }
-
-        // Vitrin ekranını sabitle
-        handler.postDelayed(() -> {
-            if (SettingsManager.isKioskActive(this) && ShizukuHelper.hasPermission()) {
-                ShizukuHelper.lockTopApp(getPackageName());
-            }
-        }, 300);
     }
 
     @Override
@@ -79,11 +72,6 @@ public class KioskActivity extends Activity {
             if (SettingsManager.isPrivacyShieldEnabled(this)) {
                 ShizukuHelper.setPrivacyShield(true);
             }
-            handler.postDelayed(() -> {
-                if (SettingsManager.isKioskActive(this) && ShizukuHelper.hasPermission()) {
-                    ShizukuHelper.lockTopApp(getPackageName());
-                }
-            }, 300);
         }
     }
 
@@ -147,23 +135,9 @@ public class KioskActivity extends Activity {
 
     private void launchKioskApp(final KioskItem item) {
         if (item == null || item.launchIntent == null) return;
-
-        // 1. Yeni uygulama penceresi açılabilmesi için mevcut sabitlemeyi kaldır
-        if (ShizukuHelper.hasPermission()) {
-            ShizukuHelper.unlockTask();
-        }
-
-        // 2. Hedef uygulamayı başlat
         try {
             item.launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
             startActivity(item.launchIntent);
-
-            // 3. Hedef uygulama ekrana geldiğinde onu sabitle
-            handler.postDelayed(() -> {
-                if (SettingsManager.isKioskActive(KioskActivity.this) && ShizukuHelper.hasPermission()) {
-                    ShizukuHelper.lockTopApp(item.pkg);
-                }
-            }, 600);
         } catch (Exception e) {
             Toast.makeText(this, "Uygulama açılamadı", Toast.LENGTH_SHORT).show();
         }
@@ -172,9 +146,6 @@ public class KioskActivity extends Activity {
     private void exitKiosk() {
         SettingsManager.setKioskActive(this, false);
         ShizukuHelper.setPrivacyShield(false);
-        if (ShizukuHelper.hasPermission()) {
-            ShizukuHelper.unlockTask();
-        }
 
         Toast.makeText(this, "Vitrin Modu Kapatıldı", Toast.LENGTH_SHORT).show();
 
