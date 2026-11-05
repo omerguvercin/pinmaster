@@ -13,41 +13,69 @@
         android:layout_width="48dp"
         android:layout_height="48dp"
         android:scaleType="fitCenter"
-        android:layout_marginEnd="14dp" />
+        android:layout_marginEnd="12dp" />
 
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:layout_marginEnd="10dp">
 
         <TextView
             android:id="@+id/app_name"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textColor="@color/text_primary"
-            android:textSize="16sp"
+            android:textSize="15sp"
             android:textStyle="bold"
             android:singleLine="true"
+            android:maxLines="1"
             android:ellipsize="end" />
 
         <TextView
             android:id="@+id/app_package"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textColor="@color/text_muted"
-            android:textSize="12sp"
+            android:textSize="11sp"
             android:singleLine="true"
+            android:maxLines="1"
             android:ellipsize="end"
             android:layout_marginTop="2dp" />
 
     </LinearLayout>
 
-    <Switch
-        android:id="@+id/app_switch"
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:focusable="false"
-        android:clickable="true" />
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <!-- Uygulamayı Doğrudan Başlat Butonu -->
+        <Button
+            android:id="@+id/btn_launch_app"
+            android:layout_width="34dp"
+            android:layout_height="34dp"
+            android:background="@drawable/btn_launch"
+            android:text="↗"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="@color/accent_cyan"
+            android:gravity="center"
+            android:includeFontPadding="false"
+            android:padding="0dp"
+            android:layout_marginEnd="8dp"
+            android:stateListAnimator="@null" />
+
+        <!-- Kilit Durumu Switch'i -->
+        <Switch
+            android:id="@+id/app_switch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:focusable="false"
+            android:clickable="true" />
+
+    </LinearLayout>
 
 </LinearLayout>

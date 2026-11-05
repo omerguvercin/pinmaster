@@ -1,13 +1,17 @@
 package com.pinmaster.app;
 
 import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Switch;
 import android.widget.TextView;
+import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -73,6 +77,7 @@ public class AppAdapter extends BaseAdapter {
         ImageView icon;
         TextView name;
         TextView pkg;
+        Button btnLaunch;
         Switch toggle;
     }
 
@@ -85,6 +90,7 @@ public class AppAdapter extends BaseAdapter {
             holder.icon = convertView.findViewById(R.id.app_icon);
             holder.name = convertView.findViewById(R.id.app_name);
             holder.pkg = convertView.findViewById(R.id.app_package);
+            holder.btnLaunch = convertView.findViewById(R.id.btn_launch_app);
             holder.toggle = convertView.findViewById(R.id.app_switch);
             convertView.setTag(holder);
         } else {
@@ -99,6 +105,7 @@ public class AppAdapter extends BaseAdapter {
         }
         holder.toggle.setChecked(app.isPinned());
 
+        // Satıra veya Switch'e basıldığında PIN kilit durumunu değiştir
         View.OnClickListener toggleListener = v -> {
             boolean newState = !app.isPinned();
             app.setPinned(newState);
@@ -112,6 +119,24 @@ public class AppAdapter extends BaseAdapter {
 
         convertView.setOnClickListener(toggleListener);
         holder.toggle.setOnClickListener(toggleListener);
+
+        // 'Aç' butonuna (↗) basıldığında uygulamayı doğrudan başlat
+        if (holder.btnLaunch != null) {
+            holder.btnLaunch.setOnClickListener(v -> {
+                try {
+                    PackageManager pm = context.getPackageManager();
+                    Intent launchIntent = pm.getLaunchIntentForPackage(app.getPackageName());
+                    if (launchIntent != null) {
+                        launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        context.startActivity(launchIntent);
+                    } else {
+                        Toast.makeText(context, "Uygulama başlatılamadı: " + app.getAppName(), Toast.LENGTH_SHORT).show();
+                    }
+                } catch (Exception e) {
+                    Toast.makeText(context, "Başlatma hatası: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
 
         return convertView;
     }
