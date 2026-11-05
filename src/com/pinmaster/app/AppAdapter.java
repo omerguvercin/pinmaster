@@ -85,6 +85,7 @@ public class AppAdapter extends BaseAdapter {
     }
 
     private static class ViewHolder {
+        View cardContainer;
         ImageView icon;
         TextView name;
         TextView pkg;
@@ -99,6 +100,7 @@ public class AppAdapter extends BaseAdapter {
         if (convertView == null) {
             convertView = LayoutInflater.from(context).inflate(R.layout.item_app, parent, false);
             holder = new ViewHolder();
+            holder.cardContainer = convertView.findViewById(R.id.item_card_container);
             holder.icon = convertView.findViewById(R.id.app_icon);
             holder.name = convertView.findViewById(R.id.app_name);
             holder.pkg = convertView.findViewById(R.id.app_package);
@@ -118,8 +120,12 @@ public class AppAdapter extends BaseAdapter {
         }
         holder.toggle.setChecked(app.isPinned());
 
-        // Kilit Modu Rozeti (Kilitli / Kilitli: 15dk / Sahte Uyarı)
+        // Kilit Modu Rozeti (Kilitli / Kilitli: 15dk / Sahte Uyarı) ve Siber Kart Arka Planı
         if (app.isPinned()) {
+            if (holder.cardContainer != null) {
+                holder.cardContainer.setBackgroundResource(R.drawable.card_bg_active);
+            }
+            holder.pkg.setVisibility(View.GONE);
             holder.lockMode.setVisibility(View.VISIBLE);
             int currentMode = SettingsManager.getAppLockMode(context, app.getPackageName());
             int timerMin = SettingsManager.getAppTimerMinutes(context, app.getPackageName());
@@ -134,6 +140,10 @@ public class AppAdapter extends BaseAdapter {
 
             holder.lockMode.setOnClickListener(v -> showModeDialog(app));
         } else {
+            if (holder.cardContainer != null) {
+                holder.cardContainer.setBackgroundResource(R.drawable.card_bg);
+            }
+            holder.pkg.setVisibility(View.VISIBLE);
             holder.lockMode.setVisibility(View.GONE);
             holder.lockMode.setOnClickListener(null);
         }

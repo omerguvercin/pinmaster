@@ -263,8 +263,8 @@ public class MainActivity extends Activity {
             tvAdbCommand.setText("İzin İste");
             tvAdbCommand.setOnClickListener(v -> ShizukuHelper.requestPermission(ShizukuHelper.REQUEST_CODE_SHIZUKU));
         } else {
-            tvStatusTitle.setText("Yerel Sabitleme ve Shizuku Aktif");
-            tvStatusDesc.setText("Tüm kilitler hazır. Seçilen uygulamalar doğrudan yerel olarak kilitlenecek.");
+            tvStatusTitle.setText("Kalkan Devrede");
+            tvStatusDesc.setText("Shizuku yerel koruması etkin. Seçilen uygulamalar doğrudan kilitlenecek.");
             cardStatus.setBackgroundResource(R.drawable.badge_active);
             tvAdbCommand.setVisibility(View.GONE);
             ShizukuHelper.ensureAgentRunning();
@@ -357,9 +357,13 @@ public class MainActivity extends Activity {
         tabBtnSettings.setTextColor(index == 1 ? active : inactive);
         tabBtnGuide.setTextColor(index == 2 ? active : inactive);
 
-        tabBtnApps.setBackgroundResource(index == 0 ? R.drawable.card_bg : android.R.color.transparent);
-        tabBtnSettings.setBackgroundResource(index == 1 ? R.drawable.card_bg : android.R.color.transparent);
-        tabBtnGuide.setBackgroundResource(index == 2 ? R.drawable.card_bg : android.R.color.transparent);
+        tabBtnApps.setBackgroundResource(index == 0 ? R.drawable.tab_selected_bg : android.R.color.transparent);
+        tabBtnSettings.setBackgroundResource(index == 1 ? R.drawable.tab_selected_bg : android.R.color.transparent);
+        tabBtnGuide.setBackgroundResource(index == 2 ? R.drawable.tab_selected_bg : android.R.color.transparent);
+
+        tabBtnApps.setTypeface(null, index == 0 ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
+        tabBtnSettings.setTypeface(null, index == 1 ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
+        tabBtnGuide.setTypeface(null, index == 2 ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
     }
 
     // ─── Search ───────────────────────────────────────────────────────────────

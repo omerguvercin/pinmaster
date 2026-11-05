@@ -3,7 +3,7 @@
     <item android:state_checked="true">
         <inset android:insetLeft="2dp" android:insetRight="2dp" android:insetTop="2dp" android:insetBottom="2dp">
             <shape android:shape="oval">
-                <size android:width="22dp" android:height="22dp" />
+                <size android:width="20dp" android:height="20dp" />
                 <solid android:color="@color/switch_thumb_on" />
             </shape>
         </inset>
@@ -11,7 +11,7 @@
     <item>
         <inset android:insetLeft="2dp" android:insetRight="2dp" android:insetTop="2dp" android:insetBottom="2dp">
             <shape android:shape="oval">
-                <size android:width="22dp" android:height="22dp" />
+                <size android:width="20dp" android:height="20dp" />
                 <solid android:color="@color/switch_thumb_off" />
             </shape>
         </inset>
