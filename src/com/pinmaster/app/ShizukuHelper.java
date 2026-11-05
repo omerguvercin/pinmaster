@@ -2,6 +2,7 @@ package com.pinmaster.app;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.util.Log;
 import moe.shizuku.server.IShizukuService;
@@ -83,6 +84,52 @@ public class ShizukuHelper {
             executeCommand("cmd statusbar send-disable-flag notification-peek statusbar-expansion; cmd statusbar collapse");
         } else {
             executeCommand("cmd statusbar send-disable-flag none");
+        }
+    }
+
+    public static String getCurrentHomeActivity(Context context) {
+        try {
+            PackageManager pm = context.getPackageManager();
+            Intent homeIntent = new Intent(Intent.ACTION_MAIN);
+            homeIntent.addCategory(Intent.CATEGORY_HOME);
+            android.content.pm.ResolveInfo resolveInfo = pm.resolveActivity(homeIntent, PackageManager.MATCH_DEFAULT_ONLY);
+            if (resolveInfo != null && resolveInfo.activityInfo != null) {
+                String pkg = resolveInfo.activityInfo.packageName;
+                String name = resolveInfo.activityInfo.name;
+                if (!context.getPackageName().equals(pkg)) {
+                    return pkg + "/" + name;
+                }
+            }
+        } catch (Exception ignored) {}
+        return null;
+    }
+
+    public static void enableKioskMode(Context context) {
+        if (!hasPermission()) return;
+        // 1. Mevcut ana ekrani kaydet
+        String currentHome = getCurrentHomeActivity(context);
+        if (currentHome != null && !currentHome.contains(context.getPackageName())) {
+            SettingsManager.setOriginalLauncher(context, currentHome);
+        }
+
+        // 2. KioskActivity'yi varsayilan ana ekran yap
+        executeCommand("cmd package set-home-activity " + context.getPackageName() + "/.KioskActivity");
+
+        // 3. Son Uygulamalar (recent) ve Bildirim Cubugu (notification-peek, statusbar-expansion) kalkanini ac
+        executeCommand("cmd statusbar send-disable-flag recent notification-peek statusbar-expansion; cmd statusbar collapse");
+    }
+
+    public static void disableKioskMode(Context context) {
+        if (!hasPermission()) return;
+        // 1. Durum ve Son Uygulamalar kalkanini kaldir
+        executeCommand("cmd statusbar send-disable-flag none");
+
+        // 2. Orijinal ana ekrani geri yukle
+        String originalHome = SettingsManager.getOriginalLauncher(context);
+        if (originalHome != null && !originalHome.isEmpty()) {
+            executeCommand("cmd package set-home-activity " + originalHome);
+        } else {
+            executeCommand("cmd package set-home-activity --clear");
         }
     }
 

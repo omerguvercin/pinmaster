@@ -169,6 +169,15 @@ public class SettingsManager {
 
     private static final String KEY_KIOSK_PACKAGES = "kiosk_packages";
     private static final String KEY_KIOSK_ACTIVE   = "kiosk_mode_active";
+    private static final String KEY_ORIGINAL_LAUNCHER = "original_launcher_component";
+
+    public static String getOriginalLauncher(Context ctx) {
+        return getPrefs(ctx).getString(KEY_ORIGINAL_LAUNCHER, null);
+    }
+
+    public static void setOriginalLauncher(Context ctx, String component) {
+        getPrefs(ctx).edit().putString(KEY_ORIGINAL_LAUNCHER, component).apply();
+    }
 
     public static boolean isKioskActive(Context ctx) {
         return getPrefs(ctx).getBoolean(KEY_KIOSK_ACTIVE, false);

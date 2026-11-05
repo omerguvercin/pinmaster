@@ -59,19 +59,15 @@ public class KioskActivity extends Activity {
         // Vitrin modunu aktif yap
         SettingsManager.setKioskActive(this, true);
 
-        // Mahremiyet Kalkanı
-        if (SettingsManager.isPrivacyShieldEnabled(this)) {
-            ShizukuHelper.setPrivacyShield(true);
-        }
+        // Sistem Seviyesinde Kiosk Baslatici ve Kalkan Aktiflestir
+        ShizukuHelper.enableKioskMode(this);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         if (SettingsManager.isKioskActive(this)) {
-            if (SettingsManager.isPrivacyShieldEnabled(this)) {
-                ShizukuHelper.setPrivacyShield(true);
-            }
+            ShizukuHelper.enableKioskMode(this);
         }
     }
 
@@ -145,7 +141,7 @@ public class KioskActivity extends Activity {
 
     private void exitKiosk() {
         SettingsManager.setKioskActive(this, false);
-        ShizukuHelper.setPrivacyShield(false);
+        ShizukuHelper.disableKioskMode(this);
 
         Toast.makeText(this, "Vitrin Modu Kapatıldı", Toast.LENGTH_SHORT).show();
 
@@ -154,6 +150,14 @@ public class KioskActivity extends Activity {
         home.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(home);
         finish();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (!SettingsManager.isKioskActive(this)) {
+            ShizukuHelper.disableKioskMode(this);
+        }
     }
 
     private void vibrate(long ms) {

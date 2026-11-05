@@ -48,13 +48,19 @@
             android:noHistory="true"
             android:configChanges="orientation|screenSize|keyboardHidden" />
 
-        <!-- Çoklu Uygulama Vitrini (Kiosk Modu) -->
+        <!-- Çoklu Uygulama Vitrini (Kiosk Launcher) -->
         <activity
             android:name=".KioskActivity"
-            android:exported="false"
+            android:exported="true"
             android:launchMode="singleTask"
             android:excludeFromRecents="true"
-            android:configChanges="orientation|screenSize|keyboardHidden" />
+            android:configChanges="orientation|screenSize|keyboardHidden">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
 
 
 
