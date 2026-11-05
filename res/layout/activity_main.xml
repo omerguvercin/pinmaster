@@ -331,48 +331,7 @@
                 </LinearLayout>
 
 
-                <!-- Çoklu Uygulama Vitrini (Kiosk) -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:background="@drawable/card_bg"
-                    android:padding="16dp"
-                    android:layout_marginTop="10dp">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Çoklu Uygulama Vitrini"
-                        android:textColor="@color/text_primary"
-                        android:textSize="15sp"
-                        android:textStyle="bold"/>
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:layout_marginBottom="12dp"
-                        android:text="Yalnızca seçili uygulamaların çalışmasına izin veren korumalı vitrin modu"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="12sp"/>
-
-                    <Button
-                        android:id="@+id/btn_launch_kiosk"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:minHeight="40dp"
-                        android:text="Vitrini Başlat"
-                        android:background="@drawable/btn_secondary"
-                        android:textColor="@color/accent_cyan"
-                        android:textSize="13sp"
-                        android:paddingLeft="20dp"
-                        android:paddingRight="20dp"
-                        android:paddingTop="10dp"
-                        android:paddingBottom="10dp"
-                        android:gravity="center"
-                        android:stateListAnimator="@null"/>
-                </LinearLayout>
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"

@@ -58,12 +58,6 @@ while true; do
         fi
     fi
 
-    # Check if Kiosk (Vitrin) mode is active - do not interfere with Kiosk
-    if [ -f "/data/local/tmp/kiosk_active.txt" ] || [ -f "/data/user/0/com.pinmaster.app/files/kiosk_active.txt" ]; then
-        sleep 0.5
-        continue
-    fi
-
     # Read current focused app from window manager (much faster and avoids broken pipes)
     LINE=$(dumpsys window 2>/dev/null | grep mFocusedApp | grep ActivityRecord | head -n 1)
     if [ -n "$LINE" ]; then
