@@ -165,6 +165,37 @@ public class SettingsManager {
         getPrefs(ctx).edit().putBoolean(KEY_PRIVACY_SHIELD, enabled).apply();
     }
 
+    // ─── Kiosk (Çoklu Uygulama Vitrini) ───────────────────────────────────────
+
+    private static final String KEY_KIOSK_PACKAGES = "kiosk_packages";
+    private static final String KEY_KIOSK_ACTIVE   = "kiosk_mode_active";
+
+    public static boolean isKioskActive(Context ctx) {
+        return getPrefs(ctx).getBoolean(KEY_KIOSK_ACTIVE, false);
+    }
+
+    public static void setKioskActive(Context ctx, boolean active) {
+        getPrefs(ctx).edit().putBoolean(KEY_KIOSK_ACTIVE, active).apply();
+    }
+
+    public static Set<String> getKioskPackages(Context ctx) {
+        Set<String> set = getPrefs(ctx).getStringSet(KEY_KIOSK_PACKAGES, null);
+        if (set == null || set.isEmpty()) {
+            return getPinnedPackages(ctx);
+        }
+        return new HashSet<>(set);
+    }
+
+    public static void setKioskPackages(Context ctx, Set<String> pkgs) {
+        getPrefs(ctx).edit().putStringSet(KEY_KIOSK_PACKAGES, pkgs).apply();
+    }
+
+    public static boolean isKioskAllowed(Context ctx, String pkg) {
+        if (pkg == null) return false;
+        if (pkg.equals(ctx.getPackageName())) return true;
+        return getKioskPackages(ctx).contains(pkg);
+    }
+
 
     // ─── Exit PIN ─────────────────────────────────────────────────────────────
 

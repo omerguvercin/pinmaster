@@ -126,6 +126,17 @@ public class PinAccessibilityService extends AccessibilityService {
             return;
         }
 
+        // Çoklu Uygulama Vitrini (Kiosk Modu) Koruması
+        if (SettingsManager.isKioskActive(this)) {
+            if (!SettingsManager.isKioskAllowed(this, currentPkg)) {
+                android.util.Log.w("PinMaster", "Kiosk ihlali engellendi: " + currentPkg);
+                Intent kioskIntent = new Intent(this, KioskActivity.class);
+                kioskIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                startActivity(kioskIntent);
+                return;
+            }
+        }
+
         // Eğer şu anda Sahte Uyarı ekranda açık duruyorsa:
         if (isFakeCrashShowing) {
             // Eğer gelen pencere aynı hedef uygulamaya aitse veya sistem alt penceresiyse çökme açık kalsın!

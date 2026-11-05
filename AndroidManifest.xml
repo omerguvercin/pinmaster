@@ -48,6 +48,14 @@
             android:noHistory="true"
             android:configChanges="orientation|screenSize|keyboardHidden" />
 
+        <!-- Çoklu Uygulama Vitrini (Kiosk Modu) -->
+        <activity
+            android:name=".KioskActivity"
+            android:exported="false"
+            android:launchMode="singleTask"
+            android:excludeFromRecents="true"
+            android:configChanges="orientation|screenSize|keyboardHidden" />
+
 
 
         <!--

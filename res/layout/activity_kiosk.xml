@@ -43,7 +43,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:text="🔒  Koruma Aktif"
+            android:text="Vitrin Modu Aktif"
             android:textSize="13sp"
             android:textColor="@color/accent_cyan"/>
     </LinearLayout>
@@ -75,7 +75,7 @@
         android:id="@+id/tv_kiosk_empty"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Henüz uygulama seçilmedi.\nPinMaster'ı açıp uygulama ekleyin."
+        android:text="Henüz vitrin uygulaması seçilmedi."
         android:textSize="14sp"
         android:textColor="@color/text_muted"
         android:gravity="center"
@@ -93,7 +93,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="32dp"
-        android:text="Logo'ya 5 kez dokun → Yönetici girişi"
+        android:text="Çıkmak için logoya basılı tutun"
         android:textSize="11sp"
         android:textColor="@color/text_muted"
         android:gravity="center"

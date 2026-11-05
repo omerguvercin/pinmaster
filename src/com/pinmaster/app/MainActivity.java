@@ -20,6 +20,7 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Switch;
 import android.widget.TextView;
+import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -52,6 +53,7 @@ public class MainActivity extends Activity {
     private Switch switchPrivacyShield;
     private TextView tvCurrentCooldown;
     private Button btnChangeCooldown;
+    private Button btnLaunchKiosk;
     private Button btnAccessibility;
     private Button btnBatteryOptimization;
     private Button btnSecuritySettings;
@@ -170,6 +172,7 @@ public class MainActivity extends Activity {
         switchPrivacyShield    = findViewById(R.id.switch_privacy_shield);
         tvCurrentCooldown      = findViewById(R.id.tv_current_cooldown);
         btnChangeCooldown      = findViewById(R.id.btn_change_cooldown);
+        btnLaunchKiosk         = findViewById(R.id.btn_launch_kiosk);
         btnAccessibility       = findViewById(R.id.btn_open_accessibility);
         btnBatteryOptimization = findViewById(R.id.btn_battery_optimization);
         btnSecuritySettings    = findViewById(R.id.btn_open_security_settings);
@@ -298,6 +301,19 @@ public class MainActivity extends Activity {
             switchPrivacyShield.setChecked(SettingsManager.isPrivacyShieldEnabled(this));
             switchPrivacyShield.setOnCheckedChangeListener((btn, checked) ->
                     SettingsManager.setPrivacyShieldEnabled(MainActivity.this, checked));
+        }
+
+        if (btnLaunchKiosk != null) {
+            btnLaunchKiosk.setOnClickListener(v -> {
+                Set<String> kioskPkgs = SettingsManager.getKioskPackages(this);
+                if (kioskPkgs.isEmpty()) {
+                    Toast.makeText(this, "Önce 'Uygulamalar' sekmesinden en az bir uygulama seçin.", Toast.LENGTH_SHORT).show();
+                    selectTab(0);
+                    return;
+                }
+                Intent kioskIntent = new Intent(MainActivity.this, KioskActivity.class);
+                startActivity(kioskIntent);
+            });
         }
 
         refreshCooldownDisplay();
