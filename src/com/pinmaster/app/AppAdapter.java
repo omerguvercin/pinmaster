@@ -59,6 +59,16 @@ public class AppAdapter extends BaseAdapter {
         notifyDataSetChanged();
     }
 
+    public void resort() {
+        if (fullList != null) {
+            Collections.sort(fullList);
+        }
+        if (displayList != null) {
+            Collections.sort(displayList);
+        }
+        notifyDataSetChanged();
+    }
+
     @Override
     public int getCount() {
         return displayList.size();
@@ -134,7 +144,7 @@ public class AppAdapter extends BaseAdapter {
             app.setPinned(newState);
             holder.toggle.setChecked(newState);
             SettingsManager.setPackagePinned(context, app.getPackageName(), newState);
-            notifyDataSetChanged();
+            resort();
             if (pinChangeListener != null) {
                 pinChangeListener.onPinChanged(app, newState);
             }
@@ -214,7 +224,7 @@ public class AppAdapter extends BaseAdapter {
                         SettingsManager.setAppLockMode(context, app.getPackageName(), SettingsManager.LOCK_MODE_PIN);
                         SettingsManager.setAppTimerMinutes(context, app.getPackageName(), chosenMin);
                     }
-                    notifyDataSetChanged();
+                    resort();
                 })
                 .setNegativeButton("İptal", null)
                 .show();

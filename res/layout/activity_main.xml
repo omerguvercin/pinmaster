@@ -404,7 +404,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="6dp"
-                        android:text="Uygulamadan çıkmak için telefonunuzun Geri ve Son Uygulamalar tuşlarına aynı anda basılı tutun (veya yukarı kaydırıp bekleyin).\n\nKilit kalktığında telefon otomatik olarak Ana Ekrana döner ve belirlediğiniz çıkış molası boyunca uygulama tekrar kilitlenmez."
+                        android:text="Uygulamadan çıkmak için telefonunuzun Geri ve Son Uygulamalar tuşlarına aynı anda basılı tutun (veya yukarı kaydırıp bekleyin).\n\nKilit kalktığında uygulama serbest kalır; uygulamayı kapatabilir veya ana ekrana dönebilirsiniz."
                         android:textColor="@color/text_secondary"
                         android:textSize="12sp"
                         android:lineSpacingExtra="3dp"/>
@@ -569,11 +569,11 @@
                     android:orientation="vertical" android:background="@drawable/card_bg"
                     android:padding="16dp" android:layout_marginBottom="10dp">
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:text="1 — Erişilebilirliği Etkinleştir"
+                        android:text="1. Erişilebilirliği Etkinleştir"
                         android:textColor="@color/accent_cyan" android:textSize="14sp" android:textStyle="bold"/>
                     <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:text="Ayarlar → Erişilebilirlik → PinMaster'ı açın. Bu yeterli — uygulama her boot'ta otomatik başlar."
+                        android:text="Ayarlar > Erişilebilirlik > PinMaster'ı açın. Uygulama her açılışta otomatik çalışır."
                         android:textColor="@color/text_secondary" android:textSize="13sp"/>
                 </LinearLayout>
 
@@ -581,7 +581,7 @@
                     android:orientation="vertical" android:background="@drawable/card_bg"
                     android:padding="16dp" android:layout_marginBottom="10dp">
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:text="2 — Uygulama Seç"
+                        android:text="2. Uygulama Seç"
                         android:textColor="@color/accent_cyan" android:textSize="14sp" android:textStyle="bold"/>
                     <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
@@ -593,11 +593,11 @@
                     android:orientation="vertical" android:background="@drawable/card_bg"
                     android:padding="16dp" android:layout_marginBottom="10dp">
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:text="3 — Shizuku'yu Başlatın"
+                        android:text="3. Shizuku'yu Başlatın"
                         android:textColor="@color/accent_cyan" android:textSize="14sp" android:textStyle="bold"/>
                     <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:text="Shizuku uygulamasını yükleyin ve Kablosuz Hata Ayıklama (Wireless Debugging) veya bilgisayardan bir kere başlatın. Ardından PinMaster'a izin verin."
+                        android:text="Shizuku uygulamasını yükleyin ve Kablosuz Hata Ayıklama (Wireless Debugging) ile bir kere başlatın. Ardından PinMaster'a izin verin."
                         android:textColor="@color/text_secondary" android:textSize="13sp"/>
                 </LinearLayout>
 
@@ -605,11 +605,11 @@
                     android:orientation="vertical" android:background="@drawable/card_bg"
                     android:padding="16dp">
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:text="4 — Kilit Nasıl Kaldırılır?"
+                        android:text="4. Kilit Nasıl Kaldırılır?"
                         android:textColor="@color/accent_cyan" android:textSize="14sp" android:textStyle="bold"/>
                     <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:text="Kilitli uygulamadan çıkmak için telefonunuzun Geri ve Son Uygulamalar (Kare/Üçgen) tuşlarına aynı anda basılı tutun (jestlerde alttan kaydırıp tutun).\n\nKilit kalktığında telefon otomatik ana ekrana döner ve belirlenen mola süresince uygulama tekrar kilitlenmez."
+                        android:text="Kilitli uygulamadan çıkmak için telefonunuzun Geri ve Son Uygulamalar tuşlarına aynı anda basılı tutun (jestlerde alttan kaydırıp tutun).\n\nKilit kalktığında uygulama serbest kalır; uygulamayı kapatabilir veya ana ekrana dönebilirsiniz."
                         android:textColor="@color/text_secondary" android:textSize="13sp"/>
                 </LinearLayout>
 

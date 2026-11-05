@@ -121,7 +121,7 @@ public class MainActivity extends Activity {
                 }
                 SettingsManager.selectAllPackages(MainActivity.this, allPkgs);
                 if (appAdapter != null) {
-                    appAdapter.notifyDataSetChanged();
+                    appAdapter.resort();
                 }
                 updateSelectedCountText();
             });
@@ -140,7 +140,7 @@ public class MainActivity extends Activity {
                                 }
                             }
                             if (appAdapter != null) {
-                                appAdapter.notifyDataSetChanged();
+                                appAdapter.resort();
                             }
                             updateSelectedCountText();
                         })
@@ -223,21 +223,21 @@ public class MainActivity extends Activity {
         boolean accessEnabled  = isAccessibilityEnabled();
 
         if (!masterEnabled) {
-            tvStatusTitle.setText("⏸  Kalkan Duraklatıldı");
+            tvStatusTitle.setText("Kalkan Duraklatıldı");
             tvStatusDesc.setText("Otomatik koruma geçici olarak devre dışı.");
             cardStatus.setBackgroundResource(R.drawable.badge_inactive);
             tvAdbCommand.setVisibility(View.GONE);
         } else if (!accessEnabled) {
-            tvStatusTitle.setText("⚠️  Erişilebilirlik İzni Gerekli");
+            tvStatusTitle.setText("Erişilebilirlik İzni Gerekli");
             tvStatusDesc.setText("'Erişilebilirliği Aç' butonuna basıp PinMaster'ı etkinleştirin.");
             cardStatus.setBackgroundResource(R.drawable.badge_inactive);
             tvAdbCommand.setVisibility(View.GONE);
         } else if (!ShizukuHelper.isShizukuInstalled(this)) {
-            tvStatusTitle.setText("📦  Shizuku Yüklü Değil");
+            tvStatusTitle.setText("Shizuku Yüklü Değil");
             tvStatusDesc.setText("PinMaster'ın rootsuz yerel kilit atabilmesi için Shizuku gereklidir. Yüklemek için dokunun.");
             cardStatus.setBackgroundResource(R.drawable.badge_inactive);
             tvAdbCommand.setVisibility(View.VISIBLE);
-            tvAdbCommand.setText("👉 Shizuku'yu Yükle (Google Play)");
+            tvAdbCommand.setText("Shizuku'yu Yükle (Google Play)");
             tvAdbCommand.setOnClickListener(v -> {
                 try {
                     startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=moe.shizuku.privileged.api")));
@@ -246,25 +246,25 @@ public class MainActivity extends Activity {
                 }
             });
         } else if (!ShizukuHelper.isShizukuAvailable()) {
-            tvStatusTitle.setText("⚡  Shizuku Servisi Başlatılmadı");
+            tvStatusTitle.setText("Shizuku Servisi Başlatılmadı");
             tvStatusDesc.setText("Yerel sabitleme için Shizuku uygulamasını açıp 'Başlat'a dokunun ya da bilgisayardan başlatın.");
             cardStatus.setBackgroundResource(R.drawable.badge_inactive);
             tvAdbCommand.setVisibility(View.VISIBLE);
-            tvAdbCommand.setText("👉 Shizuku Uygulamasını Aç");
+            tvAdbCommand.setText("Shizuku Uygulamasını Aç");
             tvAdbCommand.setOnClickListener(v -> {
                 Intent launch = getPackageManager().getLaunchIntentForPackage("moe.shizuku.privileged.api");
                 if (launch != null) startActivity(launch);
             });
         } else if (!ShizukuHelper.hasPermission()) {
-            tvStatusTitle.setText("🔑  Shizuku İzni Gerekli");
+            tvStatusTitle.setText("Shizuku İzni Gerekli");
             tvStatusDesc.setText("PinMaster'ın kilit komutunu gönderebilmesi için Shizuku iznini onaylayın.");
             cardStatus.setBackgroundResource(R.drawable.badge_inactive);
             tvAdbCommand.setVisibility(View.VISIBLE);
-            tvAdbCommand.setText("👉 İzin İste");
+            tvAdbCommand.setText("İzin İste");
             tvAdbCommand.setOnClickListener(v -> ShizukuHelper.requestPermission(ShizukuHelper.REQUEST_CODE_SHIZUKU));
         } else {
-            tvStatusTitle.setText("🛡️  Yerel Sabitleme ve Shizuku Aktif");
-            tvStatusDesc.setText("Tüm kilitler hazır! Seçilen uygulamalar doğrudan ve şifresiz yerel olarak kilitlenecek.");
+            tvStatusTitle.setText("Yerel Sabitleme ve Shizuku Aktif");
+            tvStatusDesc.setText("Tüm kilitler hazır. Seçilen uygulamalar doğrudan yerel olarak kilitlenecek.");
             cardStatus.setBackgroundResource(R.drawable.badge_active);
             tvAdbCommand.setVisibility(View.GONE);
             ShizukuHelper.ensureAgentRunning();

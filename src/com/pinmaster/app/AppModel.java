@@ -35,11 +35,13 @@ public class AppModel implements Comparable<AppModel> {
         this.isPinned = pinned;
     }
 
+    private static final java.text.Collator TURKISH_COLLATOR = java.text.Collator.getInstance(new java.util.Locale("tr", "TR"));
+
     @Override
     public int compareTo(AppModel other) {
-        // Pinned apps first, then alphabetical
+        // Pinned apps first, then alphabetical (Turkish locale aware)
         if (this.isPinned && !other.isPinned) return -1;
         if (!this.isPinned && other.isPinned) return 1;
-        return this.appName.compareToIgnoreCase(other.appName);
+        return TURKISH_COLLATOR.compare(this.appName, other.appName);
     }
 }
