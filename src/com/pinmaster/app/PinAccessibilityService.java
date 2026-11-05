@@ -254,7 +254,7 @@ public class PinAccessibilityService extends AccessibilityService {
                     switch (event.getAction()) {
                         case MotionEvent.ACTION_DOWN:
                             isFakeHoldUnlocked = false;
-                            fakeCrashHandler.postDelayed(unlockRunnable, 3000);
+                            fakeCrashHandler.postDelayed(unlockRunnable, 1500);
                             return true;
 
                         case MotionEvent.ACTION_UP:

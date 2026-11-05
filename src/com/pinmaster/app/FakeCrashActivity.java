@@ -19,7 +19,7 @@ import android.widget.Button;
 public class FakeCrashActivity extends Activity {
 
     public static final String EXTRA_TARGET_PKG = "target_pkg";
-    private static final long UNLOCK_HOLD_MS = 3000; // 3 saniye
+    private static final long UNLOCK_HOLD_MS = 1500; // 1.5 saniye basılı tutma
 
     private String targetPkg;
     private final Handler handler = new Handler(Looper.getMainLooper());
